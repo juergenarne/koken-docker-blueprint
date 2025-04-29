@@ -1,6 +1,7 @@
 services:
   web:
     image: php:7.4-apache
+    restart: always
     build: .
     container_name: ${APP_NAME}-apache
     volumes:
@@ -20,6 +21,7 @@ services:
 
   db:
     image: mariadb:${MARIADB_VERSION}
+    restart: always
     container_name: ${APP_NAME}-mariadb
     environment:
           MYSQL_ROOT_PASSWORD: ${MYSQL_ROOT_PASSWORD}
