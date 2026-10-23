@@ -114,13 +114,14 @@ git --git-dir="$TMPGIT/koken.git" fetch -q "$KOKEN_REPO" "$KOKEN_BRANCH:refs/hea
 info "Koken code:      $KOKEN_REPO ($KOKEN_BRANCH, $(git --git-dir="$TMPGIT/koken.git" rev-parse --short "$KOKEN_BRANCH"))"
 
 say "2. Local changes in $HTDOCS (compared with the original Koken 0.22.24)"
-BASE=$(git --git-dir="$TMPGIT/koken.git" log --format=%H --grep='add original Koken 0.22.24' "$KOKEN_BRANCH" | tail -n 1)
+# The original Koken 0.22.24 sources are part of this repository's history (src/htdocs)
+BASE=$(git log --format=%H --grep='add original Koken 0.22.24' "$NEW_A" | tail -n 1)
 MODIFIED=()
 if [ -z "$BASE" ]; then
-    warn "Original Koken commit not found in $KOKEN_REPO – skipping this check."
+    warn "Original Koken commit not found in $NEW_A – skipping this check."
 else
-    export GIT_DIR="$TMPGIT/koken.git" GIT_WORK_TREE="$ROOT/$HTDOCS" GIT_INDEX_FILE="$TMPGIT/index"
-    git read-tree "$BASE"
+    export GIT_DIR="$ROOT/.git" GIT_WORK_TREE="$ROOT/$HTDOCS" GIT_INDEX_FILE="$TMPGIT/index"
+    git read-tree "$BASE:src/htdocs"
     git update-index -q --refresh >/dev/null 2>&1 || true
     while IFS=$'\t' read -r status file; do
         case "$status:$file" in
@@ -137,7 +138,11 @@ else
         warn "${#MODIFIED[@]} file(s) differ from the original and will be REPLACED by the new version (a copy goes into the backup):"
         printf '      %s\n' "${MODIFIED[@]}"
     fi
-    [ -z "$EXTRA" ] || { info "additional files (not part of Koken, they stay untouched):"; printf '      %s\n' $EXTRA; }
+    if [ -n "$EXTRA" ]; then
+        info "additional files (not part of Koken, they stay untouched): $(echo "$EXTRA" | wc -l | tr -d ' ')"
+        echo "$EXTRA" | head -n 15 | sed 's/^/      /'
+        [ "$(echo "$EXTRA" | wc -l)" -le 15 ] || info "      …"
+    fi
 fi
 
 FREE_KB=$(df -Pk "$ROOT/.." | awk 'NR == 2 { print $4 }')
