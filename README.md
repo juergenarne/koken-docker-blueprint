@@ -13,7 +13,7 @@ cd koken
 
 `setup.sh`
 
-1. creates `.env` from `.env.example` with random database passwords and an installer token,
+1. creates `.env` from `.env.dist` with random database passwords and an installer token,
 2. builds the PHP 8.5 image and starts the containers,
 3. prints the link to the web installer, e.g. `http://localhost:8080/install/?token=…`.
 
@@ -28,7 +28,7 @@ Options: `./setup.sh -p 8085` (other port), `./setup.sh -y` (no questions).
 |---|---|
 | `Dockerfile` | PHP 8.5 + Apache image with GD, Imagick, ImageMagick, exif, intl, zip, mysqli (`--build-arg INSTALL_FFMPEG=true` for video support) |
 | `docker-compose.yml` | `web` (Apache/PHP) and `db` (MariaDB) |
-| `.env.example` | All settings; copied to `.env` by `setup.sh` (`.env` is not committed) |
+| `.env.dist` | All settings; copied to `.env` by `setup.sh` (`.env` is not committed) |
 | `config/php.ini` | PHP settings (memory, upload size, no error display) |
 | `config/apache-koken.conf` | Apache settings Koken needs behind a port mapping (see below) |
 | `docker/entrypoint.sh` | Fixes file permissions of `storage/` on container start |

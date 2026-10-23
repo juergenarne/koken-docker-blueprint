@@ -1,7 +1,7 @@
 #!/usr/bin/env bash
 #
 # Sets up the Koken environment (PHP 8.5 + Apache + MariaDB in Docker):
-#   1. creates .env from .env.example (random passwords + installer token)
+#   1. creates .env from .env.dist (random passwords + installer token)
 #   2. builds and starts the containers
 #   3. waits until the web server answers and prints the installer link
 #
@@ -58,7 +58,7 @@ get_env() { grep -E "^$1=" .env | tail -n 1 | cut -d= -f2- || true; }
 # --- .env ------------------------------------------------------------------------
 if [ ! -f .env ]; then
     say "Creating .env"
-    cp .env.example .env
+    cp .env.dist .env
     chmod 600 .env
 fi
 
