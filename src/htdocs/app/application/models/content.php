@@ -1811,7 +1811,8 @@ class Content extends Koken {
 			$options['visibility'] = 0;
 		}
 
-		if ($options['visibility'] > 0 && $options['order_by'] === 'published_on')
+		// is_numeric(): visibility can be 'album' – PHP 8 compares 'album' > 0 as strings (TRUE), PHP 7 did not
+		if (is_numeric($options['visibility']) && $options['visibility'] > 0 && $options['order_by'] === 'published_on')
 		{
 			$options['order_by'] = 'captured_on';
 		}
@@ -1987,7 +1988,7 @@ class Content extends Koken {
 		$bounds = $this->get_clone()
 					->select('COUNT(DISTINCT ' . $this->table . '.id) as count, MONTH(FROM_UNIXTIME(' . $bounds_order . $shift . ')) as month, YEAR(FROM_UNIXTIME(' . $bounds_order . $shift . ')) as year')
 					->group_by('id,month,year')
-					->order_by('year')
+					->order_by('year, month')
 					->get_iterated();
 
 		$dates = array();

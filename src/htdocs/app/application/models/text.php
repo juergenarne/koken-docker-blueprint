@@ -332,7 +332,7 @@ class Text extends Koken {
 		$bounds = $this->get_clone()
 					->select('COUNT(DISTINCT ' . $this->table . '.id) as count, MONTH(FROM_UNIXTIME(' . $bounds_order . $shift . ')) as month, YEAR(FROM_UNIXTIME(' . $bounds_order . $shift . ')) as year')
 					->group_by('month,year')
-					->order_by('year')
+					->order_by('year, month')
 					->get_iterated();
 
 		$dates = array();
