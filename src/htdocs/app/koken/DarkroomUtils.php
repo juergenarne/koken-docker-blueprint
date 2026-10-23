@@ -113,7 +113,7 @@ class DarkroomUtils {
 
 			function testShell($path)
 			{
-				$out = shell_exec($path . ' -version 2');
+				$out = shell_exec($path . ' -version 2>/dev/null');
 
 				if (!empty($out) && preg_match('/\d+\.\d+\.\d+/', $out, $matches)) {
 					return array('key' => $path, 'label' => $matches[0]);

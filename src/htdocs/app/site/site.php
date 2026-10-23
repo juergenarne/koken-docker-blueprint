@@ -12,6 +12,14 @@
 	}
 
 	$root_path = dirname(dirname(dirname(__FILE__)));
+
+	// Not installed yet: send visitors to the web installer
+	if (!file_exists($root_path . '/storage/configuration/database.php') && file_exists($root_path . '/install/index.php'))
+	{
+		$__base = preg_replace('~/(app/site/site|index)\.php$~', '', str_replace('\\', '/', $_SERVER['SCRIPT_NAME']));
+		header('Location: ' . $__base . '/install/');
+		exit;
+	}
 	@include $root_path . '/storage/configuration/user_setup.php';
 	require $root_path . '/app/koken/Shutter/Shutter.php';
 

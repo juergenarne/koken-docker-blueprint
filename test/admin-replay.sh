@@ -1,13 +1,13 @@
 #!/bin/sh
 # Replay admin console write operations (as the console sends them) against PHP 8.5.
-S=${IMG_DIR:-$(dirname "$0")}; B="http://localhost:${PORT:-8086}/api.php?/"; J=$S/cookies-admin.txt; rm -f $J
+IMG=${IMG_DIR:?set IMG_DIR to a directory with test1.jpg and test2.jpg}; S=$(mktemp -d); B="http://localhost:${PORT:-8086}/api.php?/"; J=$S/cookies-admin.txt; rm -f $J
 c() { m=$1; u=$2; shift 2; printf "%-6s %-48s " "$m" "$u"; curl -s -m 120 -A KokenTest -b $J -c $J -H 'X-Koken-Auth: cookie' -o $S/last.json -w "%{http_code}" "$B$u" "$@"; printf " %s\n" "$(head -c 90 $S/last.json | tr '\n' ' ')"; }
 put() { u=$1; shift; c PUT "$u" -d _method=PUT "$@"; }
 del() { u=$1; shift; c DELETE "$u" -d _method=DELETE "$@"; }
 post() { u=$1; shift; c POST "$u" -X POST "$@"; }
 post sessions -d email=test@example.com -d password=test12345
-post content -F name=a.jpg -F file=@$S/img/test1.jpg -F visibility=public -F license=all -F max_download=none
-post content -F name=b.jpg -F file=@$S/img/test2.jpg -F visibility=public
+post content -F name=a.jpg -F file=@$IMG/test1.jpg -F visibility=public -F license=all -F max_download=none
+post content -F name=b.jpg -F file=@$IMG/test2.jpg -F visibility=public
 put  content/1 -d title=Erstes -d 'caption=Bildunterschrift mit <em>HTML</em>' -d 'tags=berlin,ubahn' -d visibility=unlisted -d license=y,s -d max_download=large -d 'focal_point={"x":30,"y":60}'
 put  content/2 -d rotate=90
 put  content/2 -d reset_internal_id=1

@@ -1,8 +1,15 @@
 #!/bin/sh
 # Reset the PHP 8.5 test installation and run Koken's install/complete endpoint.
-SRC=/Users/entwicklung/devel/advanced/koken/src/htdocs
-/Users/entwicklung/devel/advanced/koken/test/sync-code.sh
-docker exec koken85-mariadb mariadb -uroot -pkoken85root -e 'DROP DATABASE IF EXISTS koken; CREATE DATABASE koken; GRANT ALL ON koken.* TO koken@"%";' 2>&1 | grep -v Warning
+cd "$(dirname "$0")" || exit 1
+SRC=../src/htdocs
+./sync-code.sh
+# DB user "kq" has the password  p'a"s\s$x  to test quoting in the generated config
+docker exec -i koken85-mariadb mariadb -uroot -pkoken85root 2>&1 <<'SQL' | grep -v Warning
+DROP DATABASE IF EXISTS koken;
+CREATE DATABASE koken;
+CREATE USER IF NOT EXISTS 'kq'@'%' IDENTIFIED BY 'p\'a"s\\s$x';
+GRANT ALL ON koken.* TO 'kq'@'%';
+SQL
 docker exec koken85-apache sh -c 'cd /var/www/html/storage && rm -rf ./* && mkdir -p configuration originals cache tmp plugins custom themes'
 tar -C "$SRC/storage/themes" -cf - elementary axis-86d2f683-9f90-ca3f-d93f-a2e0a9d0a089 | docker exec -i koken85-apache tar -C /var/www/html/storage/themes -xf -
 tar -C "$SRC/storage/plugins" -cf - font-loader-5b6016ae-9d1a-2336-78c4-63dbb74d39b3 password-protect-fbfd75bc-7550-758d-0e79-1a39ca29f2b6 | docker exec -i koken85-apache tar -C /var/www/html/storage/plugins -xf -

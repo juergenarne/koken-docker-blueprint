@@ -5,3 +5,6 @@
 /src/htdocs/storage/*
 !/src/htdocs/storage/index.html
 /mariadb/
+
+# DB dumps for tests (personal data)
+/test/dumps/
