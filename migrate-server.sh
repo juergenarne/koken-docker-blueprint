@@ -131,21 +131,23 @@ if [ -z "$BASE" ]; then
 else
     export GIT_DIR="$ROOT/.git" GIT_WORK_TREE="$ROOT/$HTDOCS" GIT_INDEX_FILE="$TMPGIT/index"
     git read-tree "$BASE:src/htdocs"
-    git update-index -q --refresh >/dev/null 2>&1 || true
+    # compare content only – file permissions often differ after copying (e.g. 755 via FTP)
+    git -c core.fileMode=false update-index -q --refresh >/dev/null 2>&1 || true
     while IFS=$'\t' read -r status file; do
         case "$status:$file" in
             D:app/application/controllers/install.php) ;;   # deleted after every installation – expected
             M:*) MODIFIED+=("$file") ;;
             D:*) info "missing on the server (will be added): $file" ;;
         esac
-    done < <(git diff-files --name-status)
+    done < <(git -c core.fileMode=false diff-files --name-status)
     EXTRA=$(cd "$ROOT/$HTDOCS" && git ls-files --others --exclude-standard -- . ':!storage' | grep -v '\.DS_Store$' || true)
     unset GIT_DIR GIT_WORK_TREE GIT_INDEX_FILE
     if [ ${#MODIFIED[@]} -eq 0 ]; then
         info "no modified Koken files – nothing of yours gets overwritten."
     else
         warn "${#MODIFIED[@]} file(s) differ from the original and will be REPLACED by the new version (a copy goes into the backup):"
-        printf '      %s\n' "${MODIFIED[@]}"
+        printf '      %s\n' "${MODIFIED[@]}" | head -n 30
+        [ ${#MODIFIED[@]} -le 30 ] || info "      … (all of them go into modified-koken-files.tar.gz)"
     fi
     if [ -n "$EXTRA" ]; then
         info "additional files (not part of Koken, they stay untouched): $(echo "$EXTRA" | wc -l | tr -d ' ')"
