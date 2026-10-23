@@ -234,7 +234,7 @@ class DMZ_Koken {
 
 		foreach($matches[1] as $magic)
 		{
-			$template = str_replace(':' . $magic, urlencode($data[$magic]), $template);
+			$template = str_replace(':' . $magic, urlencode((string) $data[$magic]), $template);
 		}
 
 		return array( $template, $this->get_base() . $template . ( defined('DRAFT_CONTEXT') && !is_numeric(DRAFT_CONTEXT) ? '&preview=' . DRAFT_CONTEXT : '' ) );

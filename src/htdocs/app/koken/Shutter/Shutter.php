@@ -495,7 +495,7 @@ class Shutter {
 				{
 					if (is_array($obj) && !isset($obj['__koken__']))
 					{
-						$data = call_user_func_array($callback, $obj);
+						$data = call_user_func_array($callback, array_values($obj));
 					}
 					else
 					{
@@ -589,7 +589,7 @@ class Shutter {
 				{
 					if (is_array($args))
 					{
-						$data = call_user_func_array($callback, array_merge(array($data), $args));
+						$data = call_user_func_array($callback, array_values(array_merge(array($data), $args)));
 					}
 					else
 					{

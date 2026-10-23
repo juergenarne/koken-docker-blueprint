@@ -449,7 +449,7 @@ class Koken_Controller extends CI_Controller {
 		{
 			if (!is_dir(FCPATH . 'storage/plugins/' . $active->path)) continue;
 
-			$map[$active->path] = array('id' => $active->id, 'setup' => $active->setup == 1, 'data' => unserialize($active->data));
+			$map[$active->path] = array('id' => $active->id, 'setup' => $active->setup == 1, 'data' => unserialize((string) $active->data));
 		}
 
 		return Shutter::all($map);

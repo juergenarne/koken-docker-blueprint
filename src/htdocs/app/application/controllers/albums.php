@@ -459,7 +459,7 @@ class Albums extends Koken_Controller {
 
 							if ($al->exists())
 							{
-								$tags = array_merge($tags, $al->tags);
+								// (removed: array_merge() with the tags relation object – a no-op returning null in PHP 7, a TypeError in PHP 8; $tags is not used)
 								$this->db->query("DELETE FROM {$prefix}trash WHERE id = 'album-{$al->id}'");
 
 								if ($al->right_id - $al->left_id > 1)

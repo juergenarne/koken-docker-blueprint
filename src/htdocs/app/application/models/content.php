@@ -505,7 +505,7 @@ class Content extends Koken {
 	{
 		$this->_set_paths();
 
-		$f = json_decode((string) $this->focal_point);
+		$f = is_string($this->focal_point) ? json_decode($this->focal_point) : $this->focal_point;
 		if (!$f)
 		{
 			$f = array('x' => 50, 'y' => 50);

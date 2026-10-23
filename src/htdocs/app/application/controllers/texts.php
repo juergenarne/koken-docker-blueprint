@@ -146,7 +146,7 @@ class Texts extends Koken_Controller {
 							$text = $t->get_by_id($text_id);
 							if ($text->exists())
 							{
-								$tags = array_merge($tags, $text->tags);
+								// (removed: array_merge() with the tags relation object – a no-op returning null in PHP 7, a TypeError in PHP 8; $tags is not used)
 
 								$s = new Slug;
 								$prefix = $text->page_type == 0 ? 'essay' : 'page';

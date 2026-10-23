@@ -290,7 +290,7 @@ class Categories extends Koken_Controller {
 				$category->update_counts($c->model);
 			}
 
-			if (count($categories) > 1 || $this->method == 'delete')
+			if ((is_array($categories) || $categories instanceof Countable ? count($categories) : 1) > 1 || $this->method == 'delete')
 			{
 				exit;
 			}

@@ -262,7 +262,7 @@ class Koken extends DataMapper {
 	function _tag_for_output($model)
 	{
 		$t = $this->to_array();
-		list($t['__koken_url'], $t['url']) = $this->url(array('limit_to' => $model === 'text' ? 'essays' : $model));
+		list($t['__koken_url'], $t['url']) = $this->url(array('limit_to' => $model === 'text' ? 'essays' : $model)) ?: array(null, null);
 		return $t;
 	}
 

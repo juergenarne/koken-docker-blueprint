@@ -75,7 +75,7 @@ class Theme {
 		if (!$keys)
 		{
 			function sortByName($a, $b) {
-				return $a['name'] > $b['name'];
+				return ($a['name'] > $b['name']) ? 1 : (($a['name'] < $b['name']) ? -1 : 0);
 			}
 
 			usort($final, 'sortByName');

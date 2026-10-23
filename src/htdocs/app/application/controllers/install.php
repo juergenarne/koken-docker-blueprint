@@ -8,7 +8,8 @@ class Install extends CI_Controller {
     }
 
 	// TRUE if an existing database configuration points to a database that
-	// already contains Koken users.
+	// already contains Koken users – or cannot be checked (fail closed, so a
+	// temporarily unreachable database is no way to overwrite the config).
 	private function _is_installed($db_config_file)
 	{
 		if (!file_exists($db_config_file))
@@ -31,12 +32,26 @@ class Install extends CI_Controller {
 		$link = @mysqli_connect($config['hostname'], $config['username'], $config['password'], $config['database']);
 		if (!$link)
 		{
-			return false;
+			return true;
 		}
 
 		$table = str_replace('`', '', (isset($config['prefix']) ? $config['prefix'] : '') . 'users');
-		$result = @mysqli_query($link, "SELECT COUNT(*) FROM `$table`");
-		$installed = $result && ($row = mysqli_fetch_row($result)) && (int) $row[0] > 0;
+		$exists = @mysqli_query($link, "SHOW TABLES LIKE '" . mysqli_real_escape_string($link, $table) . "'");
+		if (!$exists)
+		{
+			mysqli_close($link);
+			return true;
+		}
+
+		if (mysqli_num_rows($exists) === 0)
+		{
+			$installed = false;
+		}
+		else
+		{
+			$result = @mysqli_query($link, "SELECT COUNT(*) FROM `$table`");
+			$installed = !$result || (($row = mysqli_fetch_row($result)) && (int) $row[0] > 0);
+		}
 		mysqli_close($link);
 
 		return $installed;
