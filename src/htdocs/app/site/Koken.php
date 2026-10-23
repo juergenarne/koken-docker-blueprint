@@ -4,6 +4,7 @@ define('ENVIRONMENT', 'production');
 
 require_once('lib/autolink.php');
 
+#[\AllowDynamicProperties]
 class Koken {
 	public static $site;
 	public static $settings = array();
@@ -576,10 +577,9 @@ META;
 		{
 			$action = preg_replace_callback(
 				'/_([a-zA-Z])/',
-				create_function(
-					'$matches',
-					'return strtoupper($matches[1]);'
-				),
+				function($matches) {
+					return strtoupper($matches[1]);
+				},
 				$action
 			);
 
@@ -765,7 +765,7 @@ META;
 			// If its an array (instead of a query string) then format it correctly
 			if (is_array($params))
 			{
-				$params = http_build_query($params, NULL, '&');
+				$params = http_build_query($params, '', '&');
 			}
 
 			curl_setopt($curl, CURLOPT_POST, TRUE);
@@ -932,7 +932,7 @@ META;
 
 				if ($curl !== self::$curl_handle)
 				{
-					curl_close($curl);
+					$curl = null;
 				}
 
 				self::$timers[$url] = $end - $start;
@@ -1462,7 +1462,8 @@ META;
 
 						if (isset($parameters['field']) && isset($return[0][$parameters['field']]))
 						{
-							$return = array_map(create_function('$arr', 'return $arr["' . $parameters['field'] . '"];'), $return);
+							$field = $parameters['field'];
+							$return = array_map(function($arr) use ($field) { return $arr[$field]; }, $return);
 						}
 						else
 						{
@@ -3034,7 +3035,7 @@ META;
 		);
 	}
 
-	static function time($token, $options = array(), $attr)
+	static function time($token, $options, $attr)
 	{
 
 		$options['relative'] = $options['relative'] === 'true' || $options['relative'] == '1';
@@ -3219,7 +3220,7 @@ OUT;
 
 		if (self::$curl_handle)
 		{
-			curl_close(self::$curl_handle);
+			self::$curl_handle = null;
 			self::$curl_handle = false;
 		}
 

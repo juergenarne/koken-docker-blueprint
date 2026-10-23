@@ -13,7 +13,7 @@ function keep_vars($vars = array())
 		$raw_input_data = array_merge($raw_input_data, $var);
 	}
 
-	if (get_magic_quotes_gpc()) {
+	if (function_exists('get_magic_quotes_gpc') && @get_magic_quotes_gpc()) {
 		foreach ($raw_input_data as &$value) {
 			$value = stripslashes($value);
 		}

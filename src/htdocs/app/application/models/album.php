@@ -1325,7 +1325,7 @@ Q;
 		}
 
 		$sort = array();
-		list($sort['by'], $sort['direction']) = explode(' ', $data['sort']);
+		list($sort['by'], $sort['direction']) = explode(' ', (string) $data['sort']) + array(null, null);
 
 		$data['sort'] = $sort;
 

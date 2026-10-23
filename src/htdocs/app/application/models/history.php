@@ -9,7 +9,7 @@ class History extends DataMapper {
 	);
 	
 	// Override save method for delayed queries
-	function save($user_id = false) 
+	function save($user_id = false, $related_field = '')
 	{
 		if ($user_id)
 		{

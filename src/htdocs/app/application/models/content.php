@@ -167,7 +167,7 @@ class Content extends Koken {
 	function _unserialize($string) {
 		$original = MB_ENABLED ? mb_convert_encoding($string, 'ISO-8859-1') : utf8_decode($string);
 		$string = preg_replace_callback('!s:(\d+):"(.*?)";!s',
-			create_function('$matches', 'return "s:" . strlen($matches[2]) . ":\"" . $matches[2] . "\";";'), $original);
+			function($matches) { return 's:' . strlen($matches[2]) . ':"' . $matches[2] . '";'; }, $original);
 		$mb = @unserialize($string);
 		$original = @unserialize($original);
 		if ($mb && json_encode($mb))
@@ -313,7 +313,7 @@ class Content extends Koken {
 
 	function _get_exif_data($path = false)
 	{
-		if (!isset($this->exif_cache[$this->id]))
+		if (!isset($this->exif_cache[(string) $this->id]))
 		{
 			if (!$path)
 			{
@@ -323,15 +323,15 @@ class Content extends Koken {
 			$pathinfo = pathinfo($path);
 			if (in_array(strtolower($pathinfo['extension']), array('jpg', 'jpeg')) && is_callable('exif_read_data'))
 			{
-				@$this->exif_cache[$this->id] = exif_read_data($path, 0, true);
+				@$this->exif_cache[(string) $this->id] = exif_read_data($path, 0, true);
 			}
 			else
 			{
-				$this->exif_cache[$this->id] = array();
+				$this->exif_cache[(string) $this->id] = array();
 			}
 		}
 
-		return $this->exif_cache[$this->id];
+		return $this->exif_cache[(string) $this->id];
 
 	}
 
@@ -496,7 +496,7 @@ class Content extends Koken {
 	{
 		$this->path = substr($this->internal_id, 0, 2) . DIRECTORY_SEPARATOR . substr($this->internal_id, 2, 2);
 
-		$padded_id = str_pad($this->id, 6, '0', STR_PAD_LEFT);
+		$padded_id = str_pad((string) $this->id, 6, '0', STR_PAD_LEFT);
 		$this->cache_path = substr($padded_id, 0, 3) . DIRECTORY_SEPARATOR . substr($padded_id, 3);
 	}
 
@@ -505,7 +505,7 @@ class Content extends Koken {
 	{
 		$this->_set_paths();
 
-		$f = json_decode($this->focal_point);
+		$f = json_decode((string) $this->focal_point);
 		if (!$f)
 		{
 			$f = array('x' => 50, 'y' => 50);
@@ -699,7 +699,7 @@ class Content extends Koken {
 			}
 			else
 			{
-				$preview_file = array_shift(explode(':', $this->lg_preview));
+				$preview_file = explode(':', $this->lg_preview)[0];
 				$preview_path = $this->path_to_original() . '_previews' . DIRECTORY_SEPARATOR . $preview_file;
 				list($original_width, $original_height) = getimagesize($preview_path);
 				$original_aspect = $original_width/$original_height;
@@ -832,7 +832,7 @@ class Content extends Koken {
 
 		if ($this->file_type != 0 && !empty($this->lg_preview))
 		{
-			$preview_file = array_shift(explode(':', $this->lg_preview));
+			$preview_file = explode(':', $this->lg_preview)[0];
 		}
 
 		if ($options['auth'] || $data['file_type'] != 0 || (int) $data['max_download'] === 1)
@@ -1699,8 +1699,8 @@ class Content extends Koken {
 			else if (isset($exif['EXIF']['UndefinedTag:0xA432']))
 			{
 				$val = $exif['EXIF']['UndefinedTag:0xA432'];
-				$short = array_shift(explode('/', $val[0]));
-				$long = array_shift(explode('/', $val[1]));
+				$short = explode('/', $val[0])[0];
+				$long = explode('/', $val[1])[0];
 				$lens = $short;
 				if ($short != $long)
 				{

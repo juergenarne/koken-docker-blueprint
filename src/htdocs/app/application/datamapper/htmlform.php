@@ -22,6 +22,7 @@
  *
  * @package		DMZ-Included-Extensions
  */
+#[\AllowDynamicProperties]
 class DMZ_HTMLForm {
 
 	// this is the default template (view) to use for the overall form

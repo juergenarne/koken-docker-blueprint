@@ -36,7 +36,7 @@ function execTime($function, $title="", $iterations = 100000) {
 	$t2 = ($sec+$usec) * 1000;
 	$t2 = $t2 - $t1;
 	if (!empty($title)) {
-		print "<pre>$title: " . number_format((double)$t2, 2) . " ms.</pre>\n";
+		print "<pre>$title: " . number_format((float)$t2, 2) . " ms.</pre>\n";
 	}
 	return $t2;
 }

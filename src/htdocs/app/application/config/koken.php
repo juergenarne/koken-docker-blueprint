@@ -6,7 +6,7 @@ if (isset($_SERVER['HTTP_HOST']))
 		$_SERVER['SERVER_PORT'] == 443 ||
 		(isset($_SERVER['HTTP_X_FORWARDED_PROTO']) && $_SERVER['HTTP_X_FORWARDED_PROTO'] == 'https') ? 'https' : 'http';
 	$__full =  $__protocol . '://' . $_SERVER['HTTP_HOST'] . $_SERVER['REQUEST_URI'];
-	$__base = array_shift(explode('api.php', $__full));
+	$__base = explode('api.php', $__full)[0];
 	$__rel = str_replace($__protocol . '://' . $_SERVER['HTTP_HOST'], '', $__full);
 	$__root = str_replace($__protocol . '://' . $_SERVER['HTTP_HOST'], '', $__base);
 	$__obj = new stdClass;

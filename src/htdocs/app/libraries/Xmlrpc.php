@@ -31,6 +31,7 @@ if ( ! function_exists('xml_parser_create'))
  * @author		EllisLab Dev Team
  * @link		http://codeigniter.com/user_guide/libraries/xmlrpc.html
  */
+#[\AllowDynamicProperties]
 class CI_Xmlrpc {
 
 	var $debug			= FALSE;	// Debugging on or off
@@ -429,6 +430,7 @@ class XML_RPC_Client extends CI_Xmlrpc
  * @author		ExpressionEngine Dev Team
  * @link		http://codeigniter.com/user_guide/libraries/xmlrpc.html
  */
+#[\AllowDynamicProperties]
 class XML_RPC_Response
 {
 	var $val = 0;
@@ -745,10 +747,10 @@ class XML_RPC_Message extends CI_Xmlrpc
 					xml_get_current_line_number($parser));
 			//error_log($errstr);
 			$r = new XML_RPC_Response(0, $this->xmlrpcerr['invalid_return'], $this->xmlrpcstr['invalid_return']);
-			xml_parser_free($parser);
+			$parser = null;
 			return $r;
 		}
-		xml_parser_free($parser);
+		$parser = null;
 
 		// ---------------------------------------
 		//  Got Ourselves Some Badness, It Seems
@@ -1012,7 +1014,7 @@ class XML_RPC_Message extends CI_Xmlrpc
 					}
 					else
 					{
-						$this->xh[$the_parser]['value'] = (double)$this->xh[$the_parser]['ac'];
+						$this->xh[$the_parser]['value'] = (float)$this->xh[$the_parser]['ac'];
 					}
 				}
 				else

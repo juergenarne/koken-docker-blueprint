@@ -31,6 +31,7 @@
  * @author		EllisLab Dev Team
  * @link		http://codeigniter.com/user_guide/general/profiling.html
  */
+#[\AllowDynamicProperties]
 class CI_Profiler {
 
 	protected $_available_sections = array(
@@ -68,7 +69,7 @@ class CI_Profiler {
 		{
 			if ( ! isset($config[$section]))
 			{
-				$this->_compile_{$section} = TRUE;
+				$this->{"_compile_".$section} = TRUE;
 			}
 		}
 
@@ -91,7 +92,7 @@ class CI_Profiler {
 		{
 			if (in_array($method, $this->_available_sections))
 			{
-				$this->_compile_{$method} = ($enable !== FALSE) ? TRUE : FALSE;
+				$this->{"_compile_".$method} = ($enable !== FALSE) ? TRUE : FALSE;
 			}
 		}
 	}
@@ -534,7 +535,7 @@ class CI_Profiler {
 
 		foreach ($this->_available_sections as $section)
 		{
-			if ($this->_compile_{$section} !== FALSE)
+			if ($this->{"_compile_".$section} !== FALSE)
 			{
 				$func = "_compile_{$section}";
 				$output .= $this->{$func}();

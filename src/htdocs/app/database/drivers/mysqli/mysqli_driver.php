@@ -68,6 +68,9 @@ class CI_DB_mysqli_driver extends CI_DB {
 	 */
 	function db_connect()
 	{
+		// PHP 8.1+ throws mysqli_sql_exception by default; CodeIgniter expects FALSE on failure
+		mysqli_report(MYSQLI_REPORT_OFF);
+
 		if ($this->port != '')
 		{
 			return @mysqli_connect($this->hostname, $this->username, $this->password, $this->database, $this->port);

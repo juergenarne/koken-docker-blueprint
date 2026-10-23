@@ -27,6 +27,7 @@
  * @author		EllisLab Dev Team
  * @link		http://codeigniter.com/user_guide/libraries/email.html
  */
+#[\AllowDynamicProperties]
 class CI_Email {
 
 	var	$useragent		= "CodeIgniter";
@@ -93,7 +94,7 @@ class CI_Email {
 		else
 		{
 			$this->_smtp_auth = ($this->smtp_user == '' AND $this->smtp_pass == '') ? FALSE : TRUE;
-			$this->_safe_mode = ((boolean)@ini_get("safe_mode") === FALSE) ? FALSE : TRUE;
+			$this->_safe_mode = ((bool)@ini_get("safe_mode") === FALSE) ? FALSE : TRUE;
 		}
 
 		log_message('debug', "Email Class Initialized");
@@ -129,7 +130,7 @@ class CI_Email {
 		$this->clear();
 
 		$this->_smtp_auth = ($this->smtp_user == '' AND $this->smtp_pass == '') ? FALSE : TRUE;
-		$this->_safe_mode = ((boolean)@ini_get("safe_mode") === FALSE) ? FALSE : TRUE;
+		$this->_safe_mode = ((bool)@ini_get("safe_mode") === FALSE) ? FALSE : TRUE;
 
 		return $this;
 	}

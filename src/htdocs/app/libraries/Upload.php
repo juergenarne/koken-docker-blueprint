@@ -25,6 +25,7 @@
  * @author		EllisLab Dev Team
  * @link		http://codeigniter.com/user_guide/libraries/file_uploading.html
  */
+#[\AllowDynamicProperties]
 class CI_Upload {
 
 	public $max_size				= 0;
@@ -1009,7 +1010,7 @@ class CI_Upload {
 			if (is_resource($finfo)) // It is possible that a FALSE value is returned, if there is no magic MIME database file found on the system
 			{
 				$mime = @finfo_file($finfo, $file['tmp_name']);
-				finfo_close($finfo);
+				$finfo = null;
 
 				/* According to the comments section of the PHP manual page,
 				 * it is possible that this function returns an empty string

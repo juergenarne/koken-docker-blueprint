@@ -191,13 +191,14 @@ define('DMZ_VERSION', '1.8.2');
  * Nestedsets Extension:
  *
  */
+#[\AllowDynamicProperties]
 class DataMapper implements IteratorAggregate {
 
 	/**
 	 * Stores the shared configuration
 	 * @var array
 	 */
-	static $config = array();
+	static $dm_config = array();
 	/**
 	 * Stores settings that are common across a specific Model
 	 * @var array
@@ -391,25 +392,25 @@ class DataMapper implements IteratorAggregate {
 			$this->config->load('datamapper', TRUE, TRUE);
 
 			// Get and store config settings
-			DataMapper::$config = $this->config->item('datamapper');
+			DataMapper::$dm_config = $this->config->item('datamapper');
 
 			// now double check that all required config values were set
 			foreach(DataMapper::$_dmz_config_defaults as $config_key => $config_value)
 			{
-				if( ! array_key_exists($config_key, DataMapper::$config))
+				if( ! array_key_exists($config_key, DataMapper::$dm_config))
 				{
-					DataMapper::$config[$config_key] = $config_value;
+					DataMapper::$dm_config[$config_key] = $config_value;
 				}
 			}
 
-			DataMapper::_load_extensions(DataMapper::$global_extensions, DataMapper::$config['extensions']);
-			unset(DataMapper::$config['extensions']);
+			DataMapper::_load_extensions(DataMapper::$global_extensions, DataMapper::$dm_config['extensions']);
+			unset(DataMapper::$dm_config['extensions']);
 
 			return;
 		}
 
 		// Load stored config settings by reference
-		foreach (DataMapper::$config as $config_key => &$config_value)
+		foreach (DataMapper::$dm_config as $config_key => &$config_value)
 		{
 			// Only if they're not already set
 			if ( ! property_exists($this, $config_key))
@@ -436,13 +437,13 @@ class DataMapper implements IteratorAggregate {
 			$loaded_from_cache = FALSE;
 
 			// Load in the production cache for this model, if it exists
-			if( ! empty(DataMapper::$config['production_cache']))
+			if( ! empty(DataMapper::$dm_config['production_cache']))
 			{
 				// check if it's a fully qualified path first
-				if (!is_dir($cache_folder = DataMapper::$config['production_cache']))
+				if (!is_dir($cache_folder = DataMapper::$dm_config['production_cache']))
 				{
 					// if not, it's relative to the application path
-					$cache_folder = APPPATH . DataMapper::$config['production_cache'];
+					$cache_folder = APPPATH . DataMapper::$dm_config['production_cache'];
 				}
 				if(file_exists($cache_folder) && is_dir($cache_folder) && is_writeable($cache_folder))
 				{
@@ -830,19 +831,19 @@ class DataMapper implements IteratorAggregate {
 			}
 
 			// determine the file name and class name
-			$file = DataMapper::$config['extensions_path'] . '/' . $name . EXT;
+			$file = DataMapper::$dm_config['extensions_path'] . '/' . $name . EXT;
 
 			if ( ! file_exists($file))
 			{
 				if(strpos($name, '/') === FALSE)
 				{
-					$file = APPPATH . DataMapper::$config['extensions_path'] . '/' . $name . EXT;
+					$file = APPPATH . DataMapper::$dm_config['extensions_path'] . '/' . $name . EXT;
 					$ext = $name;
 				}
 				else
 				{
 					$file = APPPATH . $name . EXT;
-					$ext = array_pop(explode('/', $name));
+					$ext = current(array_slice(explode('/', $name), -1));
 				}
 
 				if(!file_exists($file))
@@ -1251,6 +1252,7 @@ class DataMapper implements IteratorAggregate {
 	 *
 	 * @return	Iterator An iterator for the all array
 	 */
+	#[\ReturnTypeWillChange]
 	public function getIterator() {
 		if(isset($this->_dm_dataset_iterator)) {
 			return $this->_dm_dataset_iterator;
@@ -2832,6 +2834,8 @@ class DataMapper implements IteratorAggregate {
 	 */
 	public function add_table_name($field)
 	{
+		$field = (string) $field;
+
 		// only add table if the field doesn't contain a dot (.) or open parentheses
 		if (preg_match('/[\.\(]/', $field) == 0)
 		{
@@ -5891,7 +5895,7 @@ class DataMapper implements IteratorAggregate {
 	 */
 	protected function _boolean($field)
 	{
-		$this->{$field} = (boolean)$this->{$field};
+		$this->{$field} = (bool)$this->{$field};
 	}
 
 	// --------------------------------------------------------------------
@@ -6106,13 +6110,13 @@ class DataMapper implements IteratorAggregate {
 	public function production_cache()
 	{
 		// if requested, store the item to the production cache
-		if( ! empty(DataMapper::$config['production_cache']))
+		if( ! empty(DataMapper::$dm_config['production_cache']))
 		{
 			// check if it's a fully qualified path first
-			if (!is_dir($cache_folder = DataMapper::$config['production_cache']))
+			if (!is_dir($cache_folder = DataMapper::$dm_config['production_cache']))
 			{
 				// if not, it's relative to the application path
-				$cache_folder = APPPATH . DataMapper::$config['production_cache'];
+				$cache_folder = APPPATH . DataMapper::$dm_config['production_cache'];
 			}
 			if(file_exists($cache_folder) && is_dir($cache_folder) && is_writeable($cache_folder))
 			{
@@ -6587,6 +6591,7 @@ class DataMapper implements IteratorAggregate {
  * @param string $RELATED Get the error message for a given relationship
  * @param string $transaction Get the transaction error.
  */
+#[\AllowDynamicProperties]
 class DM_Error_Object {
 	/**
 	 * Array of all error messages.
@@ -6618,6 +6623,7 @@ class DM_Error_Object {
  *
  * @package DMZ
  */
+#[\AllowDynamicProperties]
 class DM_DatasetIterator implements Iterator, Countable
 {
 	/**
@@ -6668,11 +6674,13 @@ class DM_DatasetIterator implements Iterator, Countable
 	 * Gets the item at the current index $pos
 	 * @return DataMapper
 	 */
+	#[\ReturnTypeWillChange]
 	function current()
 	{
 		return $this->get($this->pos);
 	}
 
+	#[\ReturnTypeWillChange]
 	function key()
 	{
 		return $this->pos;
@@ -6691,16 +6699,19 @@ class DM_DatasetIterator implements Iterator, Countable
 		return $this->object;
 	}
 
+	#[\ReturnTypeWillChange]
 	function next()
 	{
 		$this->pos++;
 	}
 
+	#[\ReturnTypeWillChange]
 	function rewind()
 	{
 		$this->pos = 0;
 	}
 
+	#[\ReturnTypeWillChange]
 	function valid()
 	{
 		return ($this->pos < $this->count);
@@ -6710,6 +6721,7 @@ class DM_DatasetIterator implements Iterator, Countable
 	 * Returns the number of results
 	 * @return int
 	 */
+	#[\ReturnTypeWillChange]
 	function count()
 	{
 		return $this->count;

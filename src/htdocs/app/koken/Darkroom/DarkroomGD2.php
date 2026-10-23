@@ -25,7 +25,7 @@ class DarkroomGD2 extends Darkroom {
 		$this->createSource($path);
 		$this->finalImage = imagerotate($this->sourceImage, -$degrees, 0);
 
-		imagedestroy($this->sourceImage);
+		$this->sourceImage = null;
 
 		$this->path = $path;
 		$this->quality = 100;
@@ -55,7 +55,7 @@ class DarkroomGD2 extends Darkroom {
 		}
 
 		imagecopy($this->finalImage, $interstitial, 0, 0, $cropX, $cropY, $this->width, $this->height);
-		imagedestroy($interstitial);
+		$interstitial = null;
 
 		return $this->output();
 	}
@@ -101,18 +101,18 @@ class DarkroomGD2 extends Darkroom {
 		} elseif ($this->sourceType === IMAGETYPE_GIF) {
 			imagegif($this->finalImage, $path);
 		} else {
-			imagejpeg($this->finalImage, $path, min($this->quality, 99));
+			imagejpeg($this->finalImage, $path, (int) min($this->quality, 99));
 		}
 
 		if (!$this->path) {
 			$data = ob_get_contents();
 			ob_end_clean();
-			imagedestroy($this->finalImage);
+			$this->finalImage = null;
 
 			return $data;
 		}
 
-		imagedestroy($this->finalImage);
+		$this->finalImage = null;
 	}
 
 	private function createSource($path = false)
@@ -154,7 +154,7 @@ class DarkroomGD2 extends Darkroom {
 
 		imagecopyresampled($copy, $this->sourceImage, 0, 0, 0, 0, $width, $height, $this->sourceWidth, $this->sourceHeight);
 
-		imagedestroy($this->sourceImage);
+		$this->sourceImage = null;
 
 		return $copy;
 	}

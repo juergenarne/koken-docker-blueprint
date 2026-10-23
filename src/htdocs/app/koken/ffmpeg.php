@@ -1,5 +1,6 @@
 <?php
 
+#[\AllowDynamicProperties]
 class FFmpeg {
 	var $path;
 	var $ffmpeg = 'ffmpeg';

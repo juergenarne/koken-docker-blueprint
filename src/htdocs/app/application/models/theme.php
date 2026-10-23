@@ -1,5 +1,6 @@
 <?php
 
+#[\AllowDynamicProperties]
 class Theme {
 
 	function __get($key)

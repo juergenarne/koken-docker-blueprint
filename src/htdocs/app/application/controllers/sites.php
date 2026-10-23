@@ -349,7 +349,7 @@ class Sites extends Koken_Controller {
 			}
 			else
 			{
-				$key = $draft->data['settings']['__style'] = array_shift( array_keys($template_info['styles']) );
+				$key = $draft->data['settings']['__style'] = (array_keys($template_info['styles'])[0] ?? null);
 			}
 
 			$template_info['style'] = array_merge( array('key' => $key), $template_info['styles'][$key]);
@@ -536,7 +536,7 @@ class Sites extends Koken_Controller {
 								{
 									if (strpos($f, 'id=') === 0)
 									{
-										$id = array_pop( explode('=', $f) );
+										$id = current(array_slice(explode('=', $f), -1));
 										break;
 									}
 								}
@@ -636,7 +636,7 @@ class Sites extends Koken_Controller {
 									if (empty($item['path']))
 									{
 										unset($items[$index]);
-										continue;
+										break;
 									}
 									break;
 							}
@@ -1032,7 +1032,7 @@ class Sites extends Koken_Controller {
 				'first' => $user->public_first_name,
 				'last' => $user->public_last_name,
 				'email' => $user->public_email,
-				'twitter' => str_replace('@', '', $user->twitter),
+				'twitter' => str_replace('@', '', (string) $user->twitter),
 				'facebook' => $user->facebook,
 				'google_plus' => $user->google
 			);
@@ -1187,7 +1187,7 @@ class Sites extends Koken_Controller {
 					curl_setopt($ch, CURLOPT_SSL_VERIFYHOST, 2);
 					curl_setopt($ch, CURLOPT_SSL_VERIFYPEER, false);
 					$r = curl_exec($curl);
-					curl_close($curl);
+					$curl = null;
 				}
 				exit;
 			}

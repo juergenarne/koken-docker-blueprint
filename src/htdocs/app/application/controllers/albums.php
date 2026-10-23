@@ -1,4 +1,5 @@
 <?php
+#[\AllowDynamicProperties]
 class TreeSorter {
 	private static $sort;
 
@@ -158,7 +159,7 @@ class Albums extends Koken_Controller {
 
 			ksort($levels);
 
-			$data = array_values($levels[array_shift(array_keys($levels))]);
+			$data = array_values($levels[(array_keys($levels)[0] ?? null)]);
 		}
 
 		function sort_children(&$album)

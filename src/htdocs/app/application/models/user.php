@@ -73,7 +73,7 @@ class User extends DataMapper {
 
 	function to_array($options = array())
 	{
-		$this->externals = unserialize($this->externals);
+		$this->externals = unserialize((string) $this->externals);
 		if (!$this->externals) { $this->externals = null; }
 		$exclude = array('password', 'news', 'help', 'focal_point', 'theme');
 		$bools = array();

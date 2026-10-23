@@ -27,6 +27,7 @@
  * @author		EllisLab Dev Team
  * @link		http://codeigniter.com/user_guide/libraries/output.html
  */
+#[\AllowDynamicProperties]
 class CI_Output {
 
 	/**
@@ -341,6 +342,11 @@ class CI_Output {
 		if ($output == '')
 		{
 			$output =& $this->final_output;
+		}
+
+		if ($output === NULL)
+		{
+			$output = '';
 		}
 
 		// --------------------------------------------------------------------

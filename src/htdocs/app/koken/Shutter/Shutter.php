@@ -1,5 +1,6 @@
 <?php
 
+#[\AllowDynamicProperties]
 class Shutter {
 
 	public static $active_pulse_plugins = array();
@@ -53,7 +54,7 @@ class Shutter {
 		curl_setopt($curl, CURLOPT_RETURNTRANSFER, 1);
 		curl_setopt($curl, CURLOPT_USERAGENT, 'Koken/' . KOKEN_VERSION);
 		$info = curl_exec($curl);
-		curl_close($curl);
+		$curl = null;
 
 		if ($to_json)
 		{
@@ -105,7 +106,7 @@ class Shutter {
 		}
 	}
 
-	public static function email($from, $from_name, $to = null, $subject, $message, $handler = null)
+	public static function email($from, $from_name, $to, $subject, $message, $handler = null)
 	{
 		if (is_null($to))
 		{
@@ -522,7 +523,7 @@ class Shutter {
 					preg_match_all('/([a-z_]+)="([^"]+)?"/', $attr, $attrs);
 					$attr = array_combine($attrs[1], $attrs[2]);
 				}
-				$attr['_relative_root'] = array_shift(explode('api.php', $_SERVER['PHP_SELF']));
+				$attr['_relative_root'] = explode('api.php', $_SERVER['PHP_SELF'])[0];
 
 				foreach($attr as $key => &$val) {
 					$val = str_replace(array('__quot__', '__lt__', '__gt__', '__n__', '__lb__', '__rb__', '__perc__'), array('"', '<', '>', "\n", '[', ']', '%'), $val);
@@ -559,7 +560,7 @@ class Shutter {
 
 		if (!empty($scripts))
 		{
-			$base = array_shift(explode('/api.php', $_SERVER['REQUEST_URI']));
+			$base = explode('/api.php', $_SERVER['REQUEST_URI'])[0];
 			foreach($scripts as &$script)
 			{
 				$script = '<script src="' . $base . $script . '"></script>';

@@ -30,7 +30,10 @@ class DDI_DatabaseConfig extends KokenPlugin implements KokenDatabaseConfigurati
 			}
 
 			$this->config = $config;
-			$this->set_driver();
+			if (is_array($this->config))
+			{
+				$this->set_driver();
+			}
 		}
 
 		return $this->config;

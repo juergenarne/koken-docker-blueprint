@@ -5,6 +5,7 @@
  * @author Richard Toth aka risko (risko@risko.org)
  * @version 0.1
  */
+#[\AllowDynamicProperties]
 class JPEG_ICC
 {
 	/**

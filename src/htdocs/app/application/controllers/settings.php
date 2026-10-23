@@ -40,7 +40,7 @@ class Settings extends Koken_Controller {
 		{
 			if (!isset($libs[$image_processing->value]))
 			{
-				$top = array_shift(array_keys($libs));
+				$top = (array_keys($libs)[0] ?? null);
 				$lib = $libs[$top];
 				$image_processing->value = $lib['key'];
 				$image_processing->save();
@@ -50,7 +50,7 @@ class Settings extends Koken_Controller {
 		{
 			if (!defined('MAGICK_PATH_FINAL') || (MAGICK_PATH_FINAL === 'convert' || !isset($libs[MAGICK_PATH_FINAL])))
 			{
-				$top = array_shift(array_keys($libs));
+				$top = (array_keys($libs)[0] ?? null);
 				$lib = $libs[$top];
 			}
 			else
@@ -143,11 +143,11 @@ class Settings extends Koken_Controller {
 						$cp = curl_init($f);
 						$fp = fopen($to, "w+");
 						if (!$fp) {
-							curl_close($cp);
+							$cp = null;
 						} else {
 							curl_setopt($cp, CURLOPT_FILE, $fp);
 							curl_exec($cp);
-							curl_close($cp);
+							$cp = null;
 							fclose($fp);
 						}
 					} elseif (ini_get('allow_url_fopen')) {

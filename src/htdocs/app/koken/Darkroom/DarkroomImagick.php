@@ -78,7 +78,7 @@ class DarkroomImagick extends Darkroom {
 			$this->image = $this->image->coalesceImages();
 		}
 
-		$this->image->setImageCompressionQuality($this->quality);
+		$this->image->setImageCompressionQuality((int) $this->quality);
 		$this->image->setImageResolution(72, 72);
 		$this->image->setImageDepth(8);
 	}

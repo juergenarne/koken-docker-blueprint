@@ -484,7 +484,7 @@ class Update extends Koken_Controller {
       curl_setopt($curl, CURLOPT_SSL_VERIFYHOST, 2);
       curl_setopt($curl, CURLOPT_SSL_VERIFYPEER, false);
       $r = curl_exec($curl);
-      curl_close($curl);
+      $curl = null;
 
       die( json_encode( array('done' => true) ) );
     }

@@ -20,6 +20,7 @@
  *
  * @package		DMZ-Included-Extensions
  */
+#[\AllowDynamicProperties]
 class DMZ_RowIndex {
 
 	private $first_only = FALSE;

@@ -1,0 +1,54 @@
+# Isolated PHP 8.5 test environment for Koken.
+# Uses a copy of ../src/htdocs (synced by sync-code.sh into a case-sensitive
+# Linux volume, like a real server), its own storage volume and database,
+# so the production installation (port 8080) is not touched.
+services:
+  web85:
+    build:
+      context: .
+      dockerfile: Dockerfile.php85
+    container_name: koken85-apache
+    volumes:
+      - koken85_code:/var/www/html
+      - koken85_storage:/var/www/html/storage
+      - ../config/php.ini:/usr/local/etc/php/php.ini
+      - ./debug-prepend.php:/usr/local/etc/php/debug-prepend.php:ro
+      - ./zz-test.ini:/usr/local/etc/php/conf.d/zz-test.ini:ro
+      - ./apache-koken.conf:/etc/apache2/conf-enabled/koken.conf:ro
+    ports:
+      - "8086:80"
+    depends_on:
+      - db85
+
+  web74:
+    # Reference: ORIGINAL code (baseline commit) on PHP 7.4, same DB + storage as web85
+    build:
+      context: .
+      dockerfile: Dockerfile.php74
+    container_name: koken74-apache
+    volumes:
+      - koken74_code:/var/www/html
+      - koken85_storage:/var/www/html/storage
+      - ../config/php.ini:/usr/local/etc/php/php.ini
+      - ./apache-koken.conf:/etc/apache2/conf-enabled/koken.conf:ro
+    ports:
+      - "8074:80"
+    depends_on:
+      - db85
+
+  db85:
+    image: mariadb:11.4
+    container_name: koken85-mariadb
+    environment:
+      MARIADB_ROOT_PASSWORD: koken85root
+      MARIADB_DATABASE: koken
+      MARIADB_USER: koken
+      MARIADB_PASSWORD: koken85
+    volumes:
+      - koken85_db:/var/lib/mysql
+
+volumes:
+  koken85_code:
+  koken74_code:
+  koken85_storage:
+  koken85_db:

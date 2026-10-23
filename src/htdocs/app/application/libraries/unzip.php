@@ -20,6 +20,7 @@
  * @license     
  * @version     1.0.0
  */
+#[\AllowDynamicProperties]
 class Unzip {
 
 	private $compressed_list = array();

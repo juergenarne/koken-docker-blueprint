@@ -1,5 +1,6 @@
 <?php
 
+#[\AllowDynamicProperties]
 class DarkroomUtils {
 
 	public static $presets = array(
@@ -50,7 +51,7 @@ class DarkroomUtils {
 			require_once($root . 'Imagick.php');
 			$d = new DarkroomImagick($limits);
 		}
-		else if (strpos($library, 'convert') !== false)
+		else if (strpos((string) $library, 'convert') !== false)
 		{
 			require_once($root . 'ImageMagick.php');
 			$d = new DarkroomImageMagick($library, $limits);

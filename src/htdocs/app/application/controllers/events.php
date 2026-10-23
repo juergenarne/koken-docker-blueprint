@@ -245,6 +245,11 @@ class Events extends Koken_Controller {
 		{
 			if (count($all) === 1)
 			{
+				// PHP 7 treated these (undefined) variables as null and counted
+				// $dates as 0 – keep that behaviour without warnings/TypeErrors
+				$dates = array();
+				$next = $previous = false;
+				$i = $pos = null;
 				$context = array(
 					'total' => 1,
 					'position' => 1,

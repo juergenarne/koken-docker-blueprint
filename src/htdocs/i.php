@@ -211,15 +211,15 @@
 			// TODO: Fix these create_function calls once we go 5.3
 			if ($settings['image_processing_library'] === 'imagick')
 			{
-				$d->beforeRender(create_function('$imObject, $options, $content', 'return Shutter::filter(\'darkroom.render.imagick\', array($imObject, $options, $content));'), $content);
+				$d->beforeRender(function($imObject, $options, $content) { return Shutter::filter('darkroom.render.imagick', array($imObject, $options, $content)); }, $content);
 			}
 			else if (strpos($settings['image_processing_library'], 'convert') !== false)
 			{
-				$d->beforeRender(create_function('$cmd, $options, $content', 'return Shutter::filter(\'darkroom.render.imagemagick\', array($cmd, $options, $content));'), $content);
+				$d->beforeRender(function($cmd, $options, $content) { return Shutter::filter('darkroom.render.imagemagick', array($cmd, $options, $content)); }, $content);
 			}
 			else
 			{
-				$d->beforeRender(create_function('$gdObject, $options, $content', 'return Shutter::filter(\'darkroom.render.gd\', array($gdObject, $options, $content));'), $content);
+				$d->beforeRender(function($gdObject, $options, $content) { return Shutter::filter('darkroom.render.gd', array($gdObject, $options, $content)); }, $content);
 			}
 
 			$midsize = preg_replace('/\.' . $info['extension'] . '$/', '.1600.' . $info['extension'], $original);

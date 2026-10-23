@@ -52,7 +52,7 @@ class Contents extends Koken_Controller {
 							curl_setopt_array($curl, $options);
 							curl_setopt($curl, CURLOPT_URL, $content['presets'][$preset]['url']);
 							$r = curl_exec($curl);
-							curl_close($curl);
+							$curl = null;
 
 							if (preg_match('/^.?large$/', $preset) === 0)
 							{
@@ -60,7 +60,7 @@ class Contents extends Koken_Controller {
 								curl_setopt_array($curl, $options);
 								curl_setopt($curl, CURLOPT_URL, $content['presets'][$preset]['cropped']['url']);
 								$r = curl_exec($curl);
-								curl_close($curl);
+								$curl = null;
 							}
 						}
 					}

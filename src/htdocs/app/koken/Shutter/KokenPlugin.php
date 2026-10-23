@@ -1,5 +1,6 @@
 <?php
 
+#[\AllowDynamicProperties]
 class KokenPlugin {
 
 	protected $data = array();
@@ -206,13 +207,13 @@ class KokenPlugin {
 			$cp = curl_init($f);
 			$fp = fopen($to, "w+");
 			if (!$fp) {
-				curl_close($cp);
+				$cp = null;
 				return false;
 			} else {
 				curl_setopt($cp, CURLOPT_FILE, $fp);
 				curl_exec($cp);
 				$code = curl_getinfo($cp, CURLINFO_HTTP_CODE);
-				curl_close($cp);
+				$cp = null;
 				fclose($fp);
 
 				if ($code >= 400)

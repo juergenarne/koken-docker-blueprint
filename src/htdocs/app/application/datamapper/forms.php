@@ -19,6 +19,7 @@
  *
  * @package		DMZ-ExiteCMS-Extensions
  */
+#[\AllowDynamicProperties]
 class DMZ_Forms {
 
 	/**

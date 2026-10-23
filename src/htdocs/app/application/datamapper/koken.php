@@ -1,5 +1,6 @@
 <?php
 
+#[\AllowDynamicProperties]
 class DMZ_Koken {
 
 	private $urls = false;

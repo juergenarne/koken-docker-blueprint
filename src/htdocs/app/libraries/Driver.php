@@ -28,6 +28,7 @@
  * @author		EllisLab Dev Team
  * @link
  */
+#[\AllowDynamicProperties]
 class CI_Driver_Library {
 
 	protected $valid_drivers	= array();
@@ -107,6 +108,7 @@ class CI_Driver_Library {
  * @author		EllisLab Dev Team
  * @link
  */
+#[\AllowDynamicProperties]
 class CI_Driver {
 	protected $parent;
 

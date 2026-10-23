@@ -1,0 +1,20 @@
+FROM php:8.5.12-apache
+
+RUN apt-get update && apt-get install -y \
+    libpng-dev \
+    libjpeg62-turbo-dev \
+    libfreetype6-dev \
+    libzip-dev \
+    libicu-dev \
+    libmagickwand-dev \
+    imagemagick \
+    unzip \
+    mariadb-client \
+    --no-install-recommends \
+    && docker-php-ext-configure gd --with-freetype --with-jpeg \
+    && docker-php-ext-install gd mysqli pdo_mysql zip intl exif \
+    && (pecl install imagick && docker-php-ext-enable imagick || echo "imagick not available for this PHP version") \
+    && apt-get clean && rm -rf /var/lib/apt/lists/*
+
+RUN a2enmod rewrite
+

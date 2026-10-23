@@ -1,5 +1,6 @@
 <?php
 
+#[\AllowDynamicProperties]
 abstract class Darkroom {
 
 	protected $sourcePath = false;

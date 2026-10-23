@@ -219,7 +219,7 @@ class CI_Xmlrpcs extends CI_Xmlrpc
 			sprintf('XML error: %s at line %d',
 				xml_error_string(xml_get_error_code($parser)),
 				xml_get_current_line_number($parser)));
-			xml_parser_free($parser);
+			$parser = null;
 		}
 		elseif ($parser_object->xh[$parser]['isf'])
 		{
@@ -227,7 +227,7 @@ class CI_Xmlrpcs extends CI_Xmlrpc
 		}
 		else
 		{
-			xml_parser_free($parser);
+			$parser = null;
 
 			$m = new XML_RPC_Message($parser_object->xh[$parser]['method']);
 			$plist='';
@@ -537,8 +537,8 @@ class CI_Xmlrpcs extends CI_Xmlrpc
 	 */
 	function multicall_error($err)
 	{
-		$str  = is_string($err) ? $this->xmlrpcstr["multicall_${err}"] : $err->faultString();
-		$code = is_string($err) ? $this->xmlrpcerr["multicall_${err}"] : $err->faultCode();
+		$str  = is_string($err) ? $this->xmlrpcstr["multicall_{$err}"] : $err->faultString();
+		$code = is_string($err) ? $this->xmlrpcerr["multicall_{$err}"] : $err->faultCode();
 
 		$struct['faultCode'] = new XML_RPC_Values($code, 'int');
 		$struct['faultString'] = new XML_RPC_Values($str, 'string');

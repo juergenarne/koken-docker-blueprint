@@ -7,7 +7,7 @@
 	curl_setopt($curl, CURLOPT_HEADER, 0);
 	curl_setopt($curl, CURLOPT_RETURNTRANSFER, 1);
 	curl_exec($curl);
-	curl_close($curl);
+	$curl = null;
 
 	$s = new Setting;
 	$s->where('name', 'site_hidpi')->get();

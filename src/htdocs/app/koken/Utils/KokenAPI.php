@@ -1,5 +1,6 @@
 <?php
 
+#[\AllowDynamicProperties]
 class KokenAPI {
 	private $curl;
 	private $token;
@@ -70,6 +71,6 @@ class KokenAPI {
 
 	public function clear()
 	{
-		curl_close($this->curl);
+		$this->curl = null;
 	}
 }

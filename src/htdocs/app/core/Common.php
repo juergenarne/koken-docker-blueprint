@@ -345,7 +345,7 @@ if ( ! function_exists('show_404'))
 */
 if ( ! function_exists('log_message'))
 {
-	function log_message($level = 'error', $message, $php_error = FALSE)
+	function log_message($level, $message, $php_error = FALSE)
 	{
 		static $_log;
 
@@ -469,7 +469,7 @@ if ( ! function_exists('_exception_handler'))
 	{
 		 // We don't bother with "strict" notices since they tend to fill up
 		 // the log file with excess information that isn't normally very helpful.
-		if ($severity == E_STRICT)
+		if ($severity == 2048) // E_STRICT (removed in PHP 8.4)
 		{
 			return;
 		}

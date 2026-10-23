@@ -25,6 +25,7 @@
  * @author		EllisLab Dev Team
  * @link		http://codeigniter.com/user_guide/libraries/image_lib.html
  */
+#[\AllowDynamicProperties]
 class CI_Image_lib {
 
 	var $image_library		= 'gd2';	// Can be:  imagemagick, netpbm, gd, gd2
@@ -537,8 +538,8 @@ class CI_Image_lib {
 		}
 
 		//  Kill the file handles
-		imagedestroy($dst_img);
-		imagedestroy($src_img);
+		$dst_img = null;
+		$src_img = null;
 
 		// Set the file to 777
 		@chmod($this->full_dst_path, FILE_WRITE_MODE);
@@ -743,8 +744,8 @@ class CI_Image_lib {
 		}
 
 		//  Kill the file handles
-		imagedestroy($dst_img);
-		imagedestroy($src_img);
+		$dst_img = null;
+		$src_img = null;
 
 		// Set the file to 777
 
@@ -829,7 +830,7 @@ class CI_Image_lib {
 		}
 
 		//  Kill the file handles
-		imagedestroy($src_img);
+		$src_img = null;
 
 		// Set the file to 777
 		@chmod($this->full_dst_path, FILE_WRITE_MODE);
@@ -968,8 +969,8 @@ class CI_Image_lib {
 			}
 		}
 
-		imagedestroy($src_img);
-		imagedestroy($wm_img);
+		$src_img = null;
+		$wm_img = null;
 
 		return TRUE;
 	}
@@ -1109,7 +1110,7 @@ class CI_Image_lib {
 			$this->image_save_gd($src_img);
 		}
 
-		imagedestroy($src_img);
+		$src_img = null;
 
 		return TRUE;
 	}

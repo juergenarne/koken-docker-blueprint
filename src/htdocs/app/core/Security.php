@@ -25,6 +25,7 @@
  * @author		EllisLab Dev Team
  * @link		http://codeigniter.com/user_guide/libraries/security.html
  */
+#[\AllowDynamicProperties]
 class CI_Security {
 
 	/**
@@ -270,7 +271,7 @@ class CI_Security {
 		// Is the string an array?
 		if (is_array($str))
 		{
-			while (list($key) = each($str))
+			foreach (array_keys($str) as $key)
 			{
 				$str[$key] = $this->xss_clean($str[$key]);
 			}

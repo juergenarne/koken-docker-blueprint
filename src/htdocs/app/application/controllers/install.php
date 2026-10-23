@@ -58,7 +58,7 @@ class Install extends CI_Controller {
 			}
 
 			$this->dbforge->add_field($info['fields']);
-			foreach($info['keys'] as $key)
+			foreach(isset($info['keys']) ? $info['keys'] : array() as $key)
 			{
 				$primary = false;
 				if ($key == 'id')
@@ -343,7 +343,7 @@ class Install extends CI_Controller {
 		curl_setopt($curl, CURLOPT_SSL_VERIFYHOST, 2);
 		curl_setopt($curl, CURLOPT_SSL_VERIFYPEER, false);
 		$r = curl_exec($curl);
-		curl_close($curl);
+		$curl = null;
 
 		$key = md5($_SERVER['HTTP_HOST'] . uniqid('', true));
 		Shutter::write_encryption_key($key);

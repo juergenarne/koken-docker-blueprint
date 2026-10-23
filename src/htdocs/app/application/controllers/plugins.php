@@ -208,7 +208,7 @@ class Plugins extends Koken_Controller {
 				$data = array( 'plugins' => $plugins );
 
 				function sortByName($a, $b) {
-				    return $a['name'] > $b['name'];
+				    return ($a['name'] > $b['name']) ? 1 : (($a['name'] < $b['name']) ? -1 : 0);
 				}
 
 				usort($data['plugins'], 'sortByName');

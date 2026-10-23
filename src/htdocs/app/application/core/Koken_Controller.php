@@ -115,7 +115,7 @@ class Koken_Controller extends CI_Controller {
 			$cp = curl_init($f);
 			$fp = fopen($to, "w+");
 			if (!$fp) {
-				curl_close($cp);
+				$cp = null;
 				return false;
 			} else {
 				if (strpos($f, 'https://') === 0)
@@ -137,13 +137,13 @@ class Koken_Controller extends CI_Controller {
 					$mime = curl_getinfo($cp, CURLINFO_CONTENT_TYPE);
 					if (!preg_match('/^(image|video|application)\/.*/', $mime))
 					{
-						curl_close($cp);
+						$cp = null;
 						fclose($fp);
 						unlink($to);
 						return false;
 					}
 				}
-				curl_close($cp);
+				$cp = null;
 				fclose($fp);
 			}
 		} elseif (ini_get('allow_url_fopen')) {
@@ -588,7 +588,7 @@ class Koken_Controller extends CI_Controller {
 
 		$return = trim(curl_exec($curl));
 		$code = curl_getinfo($curl, CURLINFO_HTTP_CODE);
-		curl_close($curl);
+		$curl = null;
 
 		$rewrite_check = $code === 200 && $return === 'koken:rewrite';
 

@@ -34,6 +34,7 @@ THE SOFTWARE.
  * @link			http://github.com/chadhutchins/codeigniter-mcurl
  */
 
+#[\AllowDynamicProperties]
 class Mcurl {
 
 	private $_ci;				// CodeIgniter instance
@@ -62,7 +63,7 @@ class Mcurl {
 	}
 
 	// method to add curl requests to the multi request queue
-	function add_call($key=null, $method, $url, $params = array(), $options = array())
+	function add_call($key, $method, $url, $params = array(), $options = array())
 	{
 		if (is_null($key))
 		{
@@ -71,8 +72,8 @@ class Mcurl {
 
 		// check to see if the multi handle has been closed
 		// init the multi handle again
-		$resource_type = get_resource_type($this->curl_parent);
-		if(!$resource_type || $resource_type == 'Unknown')
+		// PHP 8+: curl handles are objects, closed handles are reset to null above
+		if(!$this->curl_parent || (is_resource($this->curl_parent) && get_resource_type($this->curl_parent) == 'Unknown'))
 		{
 			$this->calls = array();
 			$this->curl_parent = curl_multi_init();
@@ -93,7 +94,7 @@ class Mcurl {
 		// If its an array (instead of a query string) then format it correctly
 		if (is_array($params))
 		{
-			$params = http_build_query($params, NULL, '&');
+			$params = http_build_query($params, '', '&');
 		}
 
 		$method = strtoupper($method);
@@ -150,6 +151,7 @@ class Mcurl {
 			}
 
 			curl_multi_close($this->curl_parent);
+			$this->curl_parent = null;
 		}
 
 		return $this->calls;
