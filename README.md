@@ -48,6 +48,8 @@ and clears Koken's caches. PHP picks up code changes immediately (no restart nee
 
 ## Migrating a server with the old layout
 
+Step-by-step guide (German, incl. pitfalls): [MIGRATE.md](MIGRATE.md).
+
 Servers set up before the split (PHP 7.4, Koken copied into `src/htdocs` by hand, `.env`
 versioned) are migrated once with `migrate-server.sh`. Do **not** use `git pull` there
 directly: it would refuse to run, and forcing it (`git stash -u`, `git clean`,
