@@ -1,0 +1,5 @@
+{
+    // src/htdocs is its own git repository (koken2026-installer) – let VS Code find it
+    "git.repositoryScanMaxDepth": 2,
+    "git.autoRepositoryDetection": true
+}
