@@ -7,6 +7,41 @@ class Install extends CI_Controller {
          parent::__construct();
     }
 
+	// TRUE if an existing database configuration points to a database that
+	// already contains Koken users.
+	private function _is_installed($db_config_file)
+	{
+		if (!file_exists($db_config_file))
+		{
+			return false;
+		}
+
+		$config = include $db_config_file;
+		if (isset($KOKEN_DATABASE))
+		{
+			$config = $KOKEN_DATABASE;
+		}
+
+		if (!is_array($config) || empty($config['hostname']))
+		{
+			return false;
+		}
+
+		mysqli_report(MYSQLI_REPORT_OFF);
+		$link = @mysqli_connect($config['hostname'], $config['username'], $config['password'], $config['database']);
+		if (!$link)
+		{
+			return false;
+		}
+
+		$table = str_replace('`', '', (isset($config['prefix']) ? $config['prefix'] : '') . 'users');
+		$result = @mysqli_query($link, "SELECT COUNT(*) FROM `$table`");
+		$installed = $result && ($row = mysqli_fetch_row($result)) && (int) $row[0] > 0;
+		mysqli_close($link);
+
+		return $installed;
+	}
+
 	function complete()
 	{
 		set_time_limit(0);
@@ -18,6 +53,16 @@ class Install extends CI_Controller {
 		include(FCPATH . 'app' . DIRECTORY_SEPARATOR . 'koken' . DIRECTORY_SEPARATOR . 'DarkroomUtils.php');
 
 		$old_db_config = FCPATH . 'storage/configuration/database.php';
+
+		// Never run on top of an existing installation (e.g. when the install
+		// cleanup could not delete this controller): that would let anyone
+		// overwrite the database configuration and create a new admin account.
+		if ($this->_is_installed($old_db_config))
+		{
+			header('HTTP/1.1 403 Forbidden');
+			header('Content-type: application/json');
+			die( json_encode(array('error' => 'Koken is already installed.', 'http' => 403)) );
+		}
 
 		if (isset($_POST['database']))
 		{
@@ -276,7 +321,20 @@ class Install extends CI_Controller {
 		if ($code != 500 && $code != 403)
 		{
 			$htaccess = create_htaccess();
-			file_put_contents(FCPATH . '.htaccess', $htaccess, FILE_APPEND);
+			$existing = file_exists(FCPATH . '.htaccess') ? file_get_contents(FCPATH . '.htaccess') : '';
+
+			if (strpos($existing, '#MARK#') !== false)
+			{
+				// Rules already present (e.g. shipped with the package): replace them
+				// instead of appending a second copy, like Koken_Controller does
+				preg_match('/#MARK#.*/s', $htaccess, $match);
+				$htaccess = preg_replace('/#MARK#.*/s', str_replace('$', '\\$', $match[0]), $existing);
+				file_put_contents(FCPATH . '.htaccess', $htaccess);
+			}
+			else
+			{
+				file_put_contents(FCPATH . '.htaccess', $htaccess, FILE_APPEND);
+			}
 		}
 
 		$base_folder = trim(preg_replace('/\/api\.php(.*)?$/', '', $_SERVER['SCRIPT_NAME']), '/');
@@ -333,17 +391,8 @@ class Install extends CI_Controller {
 			}
 		}
 
-		$curl = curl_init();
-		curl_setopt($curl, CURLOPT_URL, KOKEN_STORE_URL . '/register');
-		curl_setopt($curl, CURLOPT_POST, 1);
-	    curl_setopt($curl, CURLOPT_POSTFIELDS, http_build_query($data, '', '&'));
-		curl_setopt($curl, CURLOPT_CONNECTTIMEOUT, 10);
-		curl_setopt($curl, CURLOPT_HEADER, 0);
-		curl_setopt($curl, CURLOPT_RETURNTRANSFER, 1);
-		curl_setopt($curl, CURLOPT_SSL_VERIFYHOST, 2);
-		curl_setopt($curl, CURLOPT_SSL_VERIFYPEER, false);
-		$r = curl_exec($curl);
-		$curl = null;
+		// Registration with the (discontinued) Koken store removed: it sent
+		// name, e-mail and domain to store.koken.me.
 
 		$key = md5($_SERVER['HTTP_HOST'] . uniqid('', true));
 		Shutter::write_encryption_key($key);

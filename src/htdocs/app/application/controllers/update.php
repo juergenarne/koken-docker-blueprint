@@ -474,17 +474,7 @@ class Update extends Koken_Controller {
         }
       }
 
-      $curl = curl_init();
-      curl_setopt($curl, CURLOPT_URL, KOKEN_STORE_URL . '/register');
-      curl_setopt($curl, CURLOPT_POST, 1);
-      curl_setopt($curl, CURLOPT_POSTFIELDS, http_build_query($data, '', '&'));
-      curl_setopt($curl, CURLOPT_CONNECTTIMEOUT, 10);
-      curl_setopt($curl, CURLOPT_HEADER, 0);
-      curl_setopt($curl, CURLOPT_RETURNTRANSFER, 1);
-      curl_setopt($curl, CURLOPT_SSL_VERIFYHOST, 2);
-      curl_setopt($curl, CURLOPT_SSL_VERIFYPEER, false);
-      $r = curl_exec($curl);
-      $curl = null;
+      // Registration with the (discontinued) Koken store removed.
 
       die( json_encode( array('done' => true) ) );
     }

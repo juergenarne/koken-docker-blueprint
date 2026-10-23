@@ -152,12 +152,9 @@ class Koken_Controller extends CI_Controller {
 			}
 		}
 
-		if ((!file_exists($to) || filesize($to) === 0) && preg_match('/^https:/', $f))
-		{
-			// Some hosts fail on the DNS for store.koken.me, so fallback to the AWS domain name over regular HTTP
-			$f = str_replace('https://store.koken.me', 'http://production-rh4cavismp.elasticbeanstalk.com', $f);
-			return $this->_download(str_replace('https://', 'http://', $f), $to, $force_content_mimes);
-		}
+		// The former fallback (retry over plain HTTP via an AWS Elastic Beanstalk
+		// host of the discontinued Koken store) was removed: downloading code
+		// unencrypted from an abandoned, re-registrable host name is unsafe.
 
 		return true;
 	}

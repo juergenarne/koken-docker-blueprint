@@ -41,6 +41,12 @@ class DDI_DatabaseConfig extends KokenPlugin implements KokenDatabaseConfigurati
 
 	function write($configuration)
 	{
+		// Escape values for a single-quoted PHP string (e.g. passwords containing ' or \)
+		foreach (array('hostname', 'database', 'username', 'password', 'prefix', 'socket') as $key)
+		{
+			$configuration[$key] = isset($configuration[$key]) ? addcslashes((string) $configuration[$key], "'\\") : '';
+		}
+
 		$config = <<<CONF
 <?php
 	return array(
