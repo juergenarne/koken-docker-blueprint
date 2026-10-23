@@ -75,7 +75,7 @@ fi
 [ -n "$(get_env KOKEN_INSTALL_TOKEN)" ] || set_env KOKEN_INSTALL_TOKEN "$(random 32)"
 
 [ -n "$(get_env KOKEN_REPO)" ]   || set_env KOKEN_REPO "$(grep -E '^KOKEN_REPO=' .env.dist | cut -d= -f2-)"
-[ -n "$(get_env KOKEN_BRANCH)" ] || set_env KOKEN_BRANCH main
+[ -n "$(get_env KOKEN_BRANCH)" ] || set_env KOKEN_BRANCH master
 
 PORT=$(get_env APACHE_PORT); PORT=${PORT:-8080}
 TOKEN=$(get_env KOKEN_INSTALL_TOKEN)

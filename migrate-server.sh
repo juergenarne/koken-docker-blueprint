@@ -104,7 +104,7 @@ info "this repository: $(git rev-parse --short HEAD) -> $(git rev-parse --short 
 
 KOKEN_REPO=$(get_env KOKEN_REPO); KOKEN_BRANCH=$(get_env KOKEN_BRANCH)
 [ -n "$KOKEN_REPO" ] || KOKEN_REPO=$(git show "$NEW_A:.env.dist" 2>/dev/null | grep -E '^KOKEN_REPO=' | cut -d= -f2-)
-KOKEN_BRANCH=${KOKEN_BRANCH:-main}
+KOKEN_BRANCH=${KOKEN_BRANCH:-master}
 [ -n "$KOKEN_REPO" ] || fail "KOKEN_REPO unknown (neither in .env nor in .env.dist of $NEW_A)."
 
 TMPGIT=$(mktemp -d)
