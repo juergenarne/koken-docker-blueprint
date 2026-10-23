@@ -1,5 +1,6 @@
 .DS_Store
 .env
+.env.bak
 
 # Koken itself is its own repository, cloned into src/htdocs by setup.sh
 /src/
