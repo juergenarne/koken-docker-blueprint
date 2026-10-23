@@ -74,7 +74,7 @@ Host github-koken2026
     IdentityFile ~/.ssh/koken2026_deploy
     IdentitiesOnly yes
 EOF
-echo 'KOKEN_REPO=git@github-koken2026:juergenarne/koken2026-installer.git' >> .env
+printf '\nKOKEN_REPO=git@github-koken2026:juergenarne/koken2026-installer.git\n' >> .env
 git ls-remote "git@github-koken2026:juergenarne/koken2026-installer.git" master   # test
 ```
 
