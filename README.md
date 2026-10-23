@@ -48,6 +48,18 @@ Then, on every installation:
 It pulls both repositories, rebuilds the containers only when the Docker setup changed,
 and clears Koken's caches. PHP picks up code changes immediately (no restart needed).
 
+## Local development
+
+```bash
+./local-start.sh             # start, import the newest dump from test/dumbs/ if the DB is empty, open the browser
+./local-start.sh --fresh-db  # replace the local database with the newest dump
+./local-start.sh --stop      # stop (data is kept)
+```
+
+Changes in `src/htdocs` are visible immediately (bind mount; the script clears Koken's caches
+on every start). With a `storage/` copied from a server, the first start takes the database
+credentials for `.env` from `storage/configuration/database.php`.
+
 ## Migrating a server with the old layout
 
 Step-by-step guide (German, incl. pitfalls): [MIGRATE.md](MIGRATE.md).
@@ -98,6 +110,7 @@ is tagged `koken-rollback:<date>`.
 | `config/apache-koken.conf` | Apache settings Koken needs behind a port mapping (see below) |
 | `docker/entrypoint.sh` | Fixes file permissions of `storage/` on container start |
 | `setup.sh` / `update.sh` | first installation / updates |
+| `local-start.sh` | local development copy: start, load dump, open browser |
 | `migrate-server.sh` | one-time migration of servers with the old layout |
 | `src/htdocs/` | Koken itself – checkout of koken2026-installer, **not in this repository** |
 | `src/htdocs/install/` | Web installer, incl. the default theme *Elementary* |
