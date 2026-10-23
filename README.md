@@ -5,6 +5,8 @@
 
 ## Quick start
 
+Step-by-step guide (German, incl. nginx/HTTPS and the private repository): [INSTALL.md](INSTALL.md).
+
 ```bash
 git clone https://github.com/juergenarne/koken-docker-blueprint.git koken
 cd koken
