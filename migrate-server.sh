@@ -243,24 +243,31 @@ for kv in "KOKEN_REPO=$KOKEN_REPO" "KOKEN_BRANCH=$KOKEN_BRANCH" "APACHE_BIND=127
 done
 
 # =============================================================================
-say "5. $HTDOCS -> git checkout of $KOKEN_REPO"
+say "5. Prepare: build the PHP 8.5 image, fetch the Koken code (the site keeps running)"
 # =============================================================================
-# Only files that belong to Koken are replaced; storage/ and other untracked files
-# are never touched by git.
+# Building takes a few minutes (Imagick is compiled). The old containers keep
+# serving the old code meanwhile; the actual switch below takes seconds.
+if $APPLY; then
+    "${COMPOSE[@]}" build || fail "Building the image failed – the site still runs unchanged. To undo the repository update: $BACKUP/rollback.sh"
+else
+    info "[dry run] ${COMPOSE[*]} build"
+fi
 run git -C "$HTDOCS" init -q -b "$KOKEN_BRANCH"
 run git -C "$HTDOCS" remote add origin "$KOKEN_REPO"
 run git -C "$HTDOCS" fetch -q origin "$KOKEN_BRANCH"
+
+# =============================================================================
+say "6. Switch: $HTDOCS -> $KOKEN_REPO, start the PHP 8.5 containers"
+# =============================================================================
+# Only files that belong to Koken are replaced; storage/ and other untracked files
+# are never touched by git.
 run git -C "$HTDOCS" reset -q --hard "origin/$KOKEN_BRANCH"
 run git -C "$HTDOCS" branch -q -u "origin/$KOKEN_BRANCH"
 if $APPLY; then
     [ -f "$STORAGE/configuration/database.php" ] || fail "storage/configuration lost?! Restore with $BACKUP/rollback.sh and storage.tar.gz"
     info "Koken now at $(git -C "$HTDOCS" rev-parse --short HEAD); storage: $(du -sh "$STORAGE" | cut -f1)"
 fi
-
-# =============================================================================
-say "6. Build and start the PHP 8.5 containers"
-# =============================================================================
-run "${COMPOSE[@]}" up -d --build
+run "${COMPOSE[@]}" up -d
 
 # =============================================================================
 say "7. Check"
