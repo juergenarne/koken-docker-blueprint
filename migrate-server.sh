@@ -87,6 +87,15 @@ info "Koken:        $HTDOCS"
 info "storage:      $(du -sh "$STORAGE" | cut -f1)  (cache: $(du -sh "$STORAGE/cache" 2>/dev/null | cut -f1 || echo -))"
 info "web port:     $PORT, containers: $APP_NAME-apache / $APP_NAME-mariadb"
 
+# Local changes to versioned files (other than .env / index.php, which are handled
+# below) would make the update fail – and they must not get lost.
+LOCAL_CHANGES=$(git status --porcelain --untracked-files=no | awk '{ print $2 }' | grep -vxE "\.env|$HTDOCS/index\.php" || true)
+if [ -n "$LOCAL_CHANGES" ]; then
+    warn "Local changes in versioned files of this repository:"
+    printf '      %s\n' $LOCAL_CHANGES
+    fail "Take them over into .env / docker-compose.override.yml or commit them first (see README). Show them with: git diff"
+fi
+
 if [ -f "$STORAGE/configuration/user_setup.php" ] && grep -qE "^\s*define\(\s*'LOOPBACK_HOST_HEADER'\s*,\s*true" "$STORAGE/configuration/user_setup.php"; then
     warn "LOOPBACK_HOST_HEADER is enabled in user_setup.php. Behind an HTTPS reverse proxy this breaks Koken's internal requests."
 fi
