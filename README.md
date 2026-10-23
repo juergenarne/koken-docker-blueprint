@@ -61,6 +61,23 @@ bash /tmp/migrate-server.sh --host your-domain.tld            # dry run: checks,
 bash /tmp/migrate-server.sh --host your-domain.tld --apply    # backup, migrate, check
 ```
 
+**Access to the private Koken repository.** On a server, add a read-only deploy key and
+point `KOKEN_REPO` in `.env` to it **before** running the migration (or `setup.sh`):
+
+```bash
+ssh-keygen -t ed25519 -f ~/.ssh/koken2026_deploy -N "" -C "koken-server"
+cat ~/.ssh/koken2026_deploy.pub      # GitHub: koken2026-installer → Settings → Deploy keys → Add (read only)
+cat >> ~/.ssh/config <<'EOF'
+Host github-koken2026
+    HostName github.com
+    User git
+    IdentityFile ~/.ssh/koken2026_deploy
+    IdentitiesOnly yes
+EOF
+echo 'KOKEN_REPO=git@github-koken2026:juergenarne/koken2026-installer.git' >> .env
+git ls-remote "git@github-koken2026:juergenarne/koken2026-installer.git" master   # test
+```
+
 The dry run lists Koken files that were changed on the server (they are replaced, a copy
 goes into the backup). The backup directory (next to the repository) contains a database
 dump, `storage/` (without cache), the old code, `.env` and `rollback.sh`; the old web image
