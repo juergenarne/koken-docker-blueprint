@@ -74,8 +74,35 @@ fi
 [ -n "$(get_env MYSQL_ROOT_PASSWORD)" ] || set_env MYSQL_ROOT_PASSWORD "$(random 32)"
 [ -n "$(get_env KOKEN_INSTALL_TOKEN)" ] || set_env KOKEN_INSTALL_TOKEN "$(random 32)"
 
+[ -n "$(get_env KOKEN_REPO)" ]   || set_env KOKEN_REPO "$(grep -E '^KOKEN_REPO=' .env.dist | cut -d= -f2-)"
+[ -n "$(get_env KOKEN_BRANCH)" ] || set_env KOKEN_BRANCH main
+
 PORT=$(get_env APACHE_PORT); PORT=${PORT:-8080}
 TOKEN=$(get_env KOKEN_INSTALL_TOKEN)
+HTDOCS=$(get_env APACHE_HTDOCS); case "$HTDOCS" in ""|*'$'*) HTDOCS=src/htdocs ;; esac
+
+# --- Koken code ------------------------------------------------------------------
+# The web root is its own git repository (KOKEN_REPO). It is cloned on the first
+# run; later updates: git -C src/htdocs pull
+if [ ! -f "$HTDOCS/index.php" ]; then
+    REPO=$(get_env KOKEN_REPO); BRANCH=$(get_env KOKEN_BRANCH)
+    [ -n "$REPO" ] || fail "KOKEN_REPO is not set in .env."
+    command -v git >/dev/null 2>&1 || fail "git is required."
+    say "Cloning Koken ($REPO, branch $BRANCH) into $HTDOCS …"
+    if [ -d "$HTDOCS" ] && [ -n "$(ls -A "$HTDOCS")" ]; then
+        # Directory exists (e.g. only storage/): check out the code next to it.
+        # Untracked files such as storage/ are never touched by git.
+        git -C "$HTDOCS" init -q -b "$BRANCH"
+        git -C "$HTDOCS" remote add origin "$REPO"
+        git -C "$HTDOCS" fetch -q origin "$BRANCH"
+        git -C "$HTDOCS" checkout -q -B "$BRANCH" "origin/$BRANCH"
+    else
+        mkdir -p "$(dirname "$HTDOCS")"
+        git clone -q --branch "$BRANCH" "$REPO" "$HTDOCS"
+    fi
+elif [ ! -d "$HTDOCS/.git" ]; then
+    say "Note: $HTDOCS contains Koken but is no git checkout (older setup) – see migrate-server.sh."
+fi
 
 # --- start -----------------------------------------------------------------------
 say "Building and starting the containers (first run takes a few minutes) …"
@@ -92,7 +119,6 @@ done
 [ "${READY:-false}" = true ] || fail "The web server did not answer. Check: ${COMPOSE[*]} logs web"
 
 echo
-HTDOCS=$(get_env APACHE_HTDOCS); case "$HTDOCS" in ""|*'$'*) HTDOCS=src/htdocs ;; esac
 if [ -f "$HTDOCS/storage/configuration/database.php" ]; then
     say "Koken is running: http://localhost:$PORT/   (admin: http://localhost:$PORT/admin/)"
 else
