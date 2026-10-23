@@ -1,1 +1,7 @@
 .DS_Store
+.env
+
+# Koken installation-specific data (images, cache, config)
+/src/htdocs/storage/*
+!/src/htdocs/storage/index.html
+/mariadb/
