@@ -18,4 +18,10 @@ fi
 [ -f "$ROOT/.htaccess" ] && chown www-data:www-data "$ROOT/.htaccess"
 chown www-data:www-data "$ROOT" "$ROOT/app/application/controllers" 2>/dev/null || true
 
+# Also listen on the host port of the port mapping, so Koken's internal requests to
+# http://<host>:<port>/ from inside the container work (see config/apache-koken.conf)
+if [ -n "${KOKEN_PUBLIC_PORT:-}" ] && [ "$KOKEN_PUBLIC_PORT" != 80 ] && ! grep -q "^Listen $KOKEN_PUBLIC_PORT\$" /etc/apache2/ports.conf; then
+    echo "Listen $KOKEN_PUBLIC_PORT" >> /etc/apache2/ports.conf
+fi
+
 exec docker-php-entrypoint "$@"

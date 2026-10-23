@@ -231,6 +231,11 @@ if $APPLY; then
     git -c user.name=migrate-server -c user.email=migrate@localhost merge -q --no-edit "$NEW_A" || fail "git merge failed – run $BACKUP/rollback.sh"
     [ -f .env ] || cp -p "$BACKUP/env" .env
     cmp -s .env "$BACKUP/env" || fail ".env changed unexpectedly – run $BACKUP/rollback.sh"
+    # The two helper commits (untrack + merge) change nothing compared with $NEW_A:
+    # point master at $NEW_A itself, so later updates are plain fast-forwards.
+    if git diff --quiet "$NEW_A" HEAD; then
+        git reset -q "$NEW_A"
+    fi
     info "now at $(git rev-parse --short HEAD)"
 else
     info "[dry run] git merge $NEW_A"

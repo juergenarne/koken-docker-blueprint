@@ -19,6 +19,8 @@ services:
         condition: service_healthy
     environment:
       TZ: ${TZ:-Europe/Berlin}
+      # Apache also listens on this port inside the container (Koken's internal requests)
+      KOKEN_PUBLIC_PORT: ${APACHE_PORT:-8080}
       # Used by the web installer (src/htdocs/install/) to prefill the database step
       KOKEN_DB_HOST: db
       KOKEN_DB_NAME: ${MYSQL_DATABASE}

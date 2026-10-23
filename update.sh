@@ -26,7 +26,15 @@ APP_NAME=$(get_env APP_NAME); APP_NAME=${APP_NAME:-koken}
 
 say "Docker setup:"
 before=$(git rev-parse HEAD)
-git pull --ff-only
+git fetch -q
+if ! git merge-base --is-ancestor HEAD '@{u}'; then
+    # Local commits that change nothing (e.g. bookkeeping commits of migrate-server.sh)
+    # are dropped; anything else is left for you to sort out.
+    base=$(git merge-base HEAD '@{u}')
+    git diff --quiet "$base" HEAD || fail "This repository has local commits with changes – merge or rebase them first (git log @{u}..HEAD)."
+    git reset -q "$base"
+fi
+git merge --ff-only '@{u}'
 docker_changed=$(git diff --name-only "$before" HEAD -- Dockerfile docker-compose.yml config docker | head -n 1)
 
 say "Koken ($HTDOCS):"
