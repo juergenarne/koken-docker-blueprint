@@ -48,6 +48,52 @@ Then, on every installation:
 It pulls both repositories, rebuilds the containers only when the Docker setup changed,
 and clears Koken's caches. PHP picks up code changes immediately (no restart needed).
 
+## Theme Axis (own repository)
+
+The theme in use, *Axis*, is kept in the private repository
+[koken-theme-axis](https://github.com/juergenarne/koken-theme-axis) (the Axis license does
+not allow redistribution – keep it private). Its folder name must stay as it is: Koken stores
+it in the database.
+
+| | Theme repository |
+|---|---|
+| Local | `src/htdocs/storage/themes/axis-86d2f683-9f90-ca3f-d93f-a2e0a9d0a089/` is the checkout itself: edit, commit, push there |
+| Server | a clone next to the instance (`~/koken-theme-axis`), copied into `storage/themes/` |
+
+On the server the theme folder is not a checkout, because `storage/` belongs to `www-data`
+(`docker/entrypoint.sh` resets the owner on every container start).
+
+**Once per server** – a second read-only deploy key (GitHub allows a key for one repository only):
+
+```bash
+ssh-keygen -t ed25519 -f ~/.ssh/koken_theme_axis_deploy -N "" -C "koken-theme-axis $(hostname)"
+cat ~/.ssh/koken_theme_axis_deploy.pub   # GitHub: koken-theme-axis → Settings → Deploy keys → Add (read only)
+cat >> ~/.ssh/config <<'EOF'
+Host github-koken-theme-axis
+    HostName github.com
+    User git
+    IdentityFile ~/.ssh/koken_theme_axis_deploy
+    IdentitiesOnly yes
+EOF
+git clone git@github-koken-theme-axis:juergenarne/koken-theme-axis.git ~/koken-theme-axis
+```
+
+**Every theme update** – in the directory of the instance:
+
+```bash
+T=src/htdocs/storage/themes/axis-86d2f683-9f90-ca3f-d93f-a2e0a9d0a089
+git -C ~/koken-theme-axis pull
+sudo tar czf ~/axis-backup-$(date +%F).tgz -C "$(dirname "$T")" "$(basename "$T")"   # backup
+sudo rsync -rlcni --delete --exclude .git ~/koken-theme-axis/ "$T/"   # dry run: lists the changes
+sudo rsync -rlc   --delete --exclude .git ~/koken-theme-axis/ "$T/"
+sudo chown -R www-data:www-data "$T"
+docker exec koken-apache sh -c 'rm -rf /var/www/html/storage/cache/site/*'   # <APP_NAME>-apache
+```
+
+Check the dry run the first time: `--delete` removes files that exist only on the server.
+New theme options (e.g. *Frontend → Change style in frontend*) have to be switched on and
+published in the admin of each instance – settings live in the database, not in the theme.
+
 ## Local development
 
 ```bash
