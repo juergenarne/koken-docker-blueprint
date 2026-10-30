@@ -16,6 +16,10 @@ werden nicht verändert.** Eine Datenbank-Migration ist nicht nötig.
 
 Dauer: etwa 15 Minuten, davon wenige **Sekunden** Ausfall der Seite.
 
+Danach folgt der Umzug auf den Server-Aufbau mit getrennten Besitzern (root / `www-data`), siehe
+[Umzug nach /opt + /var/www](#umzug-nach-opt--varwww-relocate-serversh). Instanzen, die schon auf PHP 8.5 laufen,
+brauchen nur diesen Umzug.
+
 ---
 
 ## 0. Voraussetzungen prüfen
@@ -223,9 +227,7 @@ und Datenbank hat die Migration nicht verändert. Für den Notfall liegen sie tr
 ./update-app.sh     # Koken und Theme-Checkouts: git pull, leert Kokens Cache
 ```
 
-Die Trennung root / `www-data` (Docker-Setup unter `/opt/koken/<domain>`, Web-Root unter
-`/var/www/htdocs/<domain>`) beschreibt [INSTALL.md](INSTALL.md#0-voraussetzungen). Die Umstellung
-bestehender Instanzen darauf folgt.
+Nach dem Umzug (nächster Abschnitt) laufen die beiden Skripte als root bzw. `www-data`.
 
 **Aufräumen**, wenn alles ein paar Tage gut läuft:
 
@@ -233,6 +235,94 @@ bestehender Instanzen darauf folgt.
 rm -rf ../koken-backup-<datum>
 docker rmi koken-rollback:<datum>
 ```
+
+---
+
+## Umzug nach /opt + /var/www (`relocate-server.sh`)
+
+Bringt eine Instanz im PHP-8.5-Aufbau (Koken in `src/htdocs`) in den Server-Aufbau aus
+[INSTALL.md](INSTALL.md#0-voraussetzungen):
+
+| | vorher | nachher |
+|---|---|---|
+| Docker-Setup, `.env`, `mariadb/` | `/var/www/htdocs/<domain>` (dein Benutzer) | `/opt/koken/<domain>` (root, `.env` `600`) |
+| Koken + `storage/` | `/var/www/htdocs/<domain>/src/htdocs` | `/var/www/htdocs/<domain>` (www-data) |
+| Theme Axis | Kopie (rsync) | Git-Checkout von `koken-theme-axis` (www-data) |
+| Schlüssel | in deinem `~/.ssh` | nur bei `www-data` (`/var/www/.ssh`), root hat keinen |
+
+Bilder und Datenbank werden nicht verändert, nur verschoben (gleiches Dateisystem, also ein
+Umbenennen, kein Kopieren). Ausfall: wenige Sekunden.
+
+### Einmal pro Server
+
+1. Deploy-Keys für `www-data` anlegen und bei GitHub eintragen: [INSTALL.md, Schritt 1](INSTALL.md#1-deploy-keys-für-www-data-nur-server-einmal-pro-server).
+   Am Ende müssen beide `git ls-remote`-Befehle eine Zeile zeigen.
+2. `sudo`, `git` und `curl` sind installiert.
+
+### Pro Instanz
+
+Das Skript verschiebt sein eigenes Repo, deshalb von einer Kopie in `/tmp` aus starten:
+
+```bash
+curl -fsSL https://raw.githubusercontent.com/juergenarne/koken-docker-blueprint/master/relocate-server.sh -o /tmp/relocate-server.sh
+sudo bash /tmp/relocate-server.sh --domain <domain> --dir /var/www/htdocs/<domain> 2>&1 | tee /tmp/relocate-dryrun.txt
+```
+
+Der Trockenlauf ändert nichts. Darauf achten:
+
+| Abschnitt | erwartet |
+|---|---|
+| 1. Checks | richtiges Verzeichnis, Container laufen, Ziele `/opt/koken/<domain>` und `/var/www/htdocs/<domain>` |
+| This repository | keine lokalen Änderungen; Ziel-Commit von `koken-docker-blueprint` (https) |
+| Koken | `www-data reaches …`; geänderte Koken-Dateien werden gelistet (bleiben erhalten) |
+| Theme Axis | `www-data reaches …`; **Abweichungen vom Theme-Repo** werden gelistet (bleiben erhalten) |
+| backup | genug Platz unter `/root` |
+
+Dann:
+
+```bash
+sudo bash /tmp/relocate-server.sh --domain <domain> --dir /var/www/htdocs/<domain> --apply 2>&1 | tee /tmp/relocate-apply.txt
+```
+
+Das Skript sichert nach `/root/koken-relocate-<domain>-<datum>/` (nur root): DB-Dump, `.env`,
+`storage/` (ohne Cache), den Axis-Ordner und die Besitzer aller Dateien. Dazu kommen
+`rollback.sh` und das alte Image als `koken-rollback:relocate-<datum>`. Danach holt es das
+Docker-Setup über https, baut das Image (die Seite läuft weiter), verschiebt, setzt Besitzer und
+`.env` (`APACHE_HTDOCS`, `KOKEN_REPO`), macht Axis zum Checkout, startet und prüft: Startseite 200,
+`/.git/config` 404.
+
+### Danach
+
+- Im Browser prüfen: Startseite, Album, Bild, `/admin/`.
+- **Theme-Abweichungen** (falls der Trockenlauf welche gezeigt hat):
+  `sudo -u www-data -H git -C /var/www/htdocs/<domain>/storage/themes/axis-86d2f683-9f90-ca3f-d93f-a2e0a9d0a089 status`
+  bzw. `… diff`. Was bleiben soll, lokal ins Theme-Repo übernehmen und pushen. Danach auf dem Server
+  `… checkout -- .` (und neue Dateien löschen), damit `update-app.sh` sauber pullen kann.
+- Updates ab jetzt:
+  ```bash
+  sudo /opt/koken/<domain>/update.sh
+  sudo -u www-data -H /opt/koken/<domain>/update-app.sh /var/www/htdocs/<domain>
+  ```
+- Rollback, falls nötig: `sudo /root/koken-relocate-<domain>-<datum>/rollback.sh`
+- Aufräumen nach ein paar Tagen:
+  - das Backup und `docker rmi koken-rollback:relocate-<datum>`, ältere `koken-rollback:*`-Images
+  - alte Backups neben den Instanzen (`/var/www/htdocs/koken-backup-*`, mit DB-Dump und `.env`)
+  - die alten Deploy-Keys in deinem `~/.ssh` und bei GitHub (Settings → Deploy keys). Optional:
+    deinen Benutzer aus der Gruppe `docker` nehmen (`sudo gpasswd -d <benutzer> docker`).
+
+### Instanz noch auf PHP 7.4
+
+Erst die Migration oben (Schritte 0–5), dann der Umzug. Der Zugriff auf `koken2026-installer` für
+die Migration geht am einfachsten über deinen eigenen GitHub-Schlüssel per Agent-Forwarding
+(`ssh -A <server>`, dann in der `.env` `KOKEN_REPO=git@github.com:juergenarne/koken2026-installer.git`).
+So landet kein Schlüssel auf dem Server; der Umzug stellt `KOKEN_REPO` danach auf den Key von
+`www-data` um. Das Backup der Migration nach `$HOME` legen, nicht neben die Instanz:
+
+```bash
+bash /tmp/migrate-server.sh --host <domain> --backup "$HOME/koken-backup-<domain>" --apply
+```
+
+Das `rollback.sh` der Migration gilt nur bis zum Umzug.
 
 ---
 

@@ -153,6 +153,7 @@ is tagged `koken-rollback:<date>`.
 | `update-app.sh` | updates Koken and git-checked-out themes/plugins, clears the cache (www-data, no Docker) |
 | `local-start.sh` | local development copy: start, load dump, open browser |
 | `migrate-server.sh` | one-time migration of servers with the old layout |
+| `relocate-server.sh` | one-time move of a PHP 8.5 instance to `/opt/koken/<domain>` (root) + `/var/www/htdocs/<domain>` (www-data), see [MIGRATE.md](MIGRATE.md) |
 | `src/htdocs/` | Koken itself (locally; on a server `/var/www/htdocs/<domain>`) – checkout of koken2026-installer, **not in this repository** |
 | `src/htdocs/install/` | Web installer, incl. the default theme *Elementary* |
 | `src/htdocs/storage/` | Created by the installer: photos, cache, themes, plugins, configuration – **not in git** |

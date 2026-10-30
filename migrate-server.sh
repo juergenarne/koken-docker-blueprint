@@ -75,6 +75,15 @@ HTDOCS=$(get_env APACHE_HTDOCS)
 HTDOCS=${HTDOCS//\$\{APACHE_SRC\}/$(get_env APACHE_SRC)}
 case "$HTDOCS" in ""|*'$'*) HTDOCS=src/htdocs ;; esac
 STORAGE="$HTDOCS/storage"
+
+# As root (on servers where another user, e.g. www-data, owns the instance) git refuses
+# to work in foreign repositories: mark both as safe for this run only (no ~/.gitconfig
+# change). Keys for the private repository then come from your SSH agent:
+#   ssh -A <server>;  sudo --preserve-env=SSH_AUTH_SOCK bash /tmp/migrate-server.sh …
+if [ "$(id -u)" = 0 ]; then
+    export GIT_CONFIG_COUNT=2 GIT_CONFIG_KEY_0=safe.directory GIT_CONFIG_VALUE_0="$(pwd -P)" \
+           GIT_CONFIG_KEY_1=safe.directory GIT_CONFIG_VALUE_1="$(pwd -P)/$HTDOCS"
+fi
 APP_NAME=$(get_env APP_NAME); APP_NAME=${APP_NAME:-koken}
 PORT=$(get_env APACHE_PORT); PORT=${PORT:-8080}
 DB_NAME=$(get_env MYSQL_DATABASE)
@@ -201,6 +210,7 @@ if $APPLY; then
 # needed: storage.tar.gz / database.sql.gz in this directory.
 set -euo pipefail
 cd "$ROOT"
+export GIT_CONFIG_COUNT=1 GIT_CONFIG_KEY_0=safe.directory GIT_CONFIG_VALUE_0="\$(pwd -P)"
 ${COMPOSE[*]} down
 git reset -q --hard $OLD_COMMIT
 cp -p "$BACKUP/env" .env
