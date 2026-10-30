@@ -114,8 +114,11 @@ APP_NAME=$(get_env APP_NAME); APP_NAME=${APP_NAME:-koken}
 PORT=$(get_env APACHE_PORT); PORT=${PORT:-8080}
 DB_NAME=$(get_env MYSQL_DATABASE)
 KOKEN_BRANCH=$(get_env KOKEN_BRANCH); KOKEN_BRANCH=${KOKEN_BRANCH:-master}
-DB_DIR=$(get_env MARIADB_LOCAL_DIR); DB_DIR=${DB_DIR:-./mariadb/data}
-case "$DB_DIR" in /*) DB_REL=mariadb ;; *) DB_REL=${DB_DIR#./} ;; esac   # relative: moves with this repository
+# the database files themselves (mounted as /var/lib/mysql, see docker-compose.yml) belong
+# to MariaDB (UID 999) and keep their owner; everything around them becomes root's
+DB_LOCAL=$(get_env MARIADB_LOCAL_DIR); DB_DATA=$(get_env MARIADB_DATA_DIR)
+DB_DIR=${DB_LOCAL:-./mariadb/data}${DB_DATA:-/lib}
+case "$DB_DIR" in /*) DB_REL="" ;; *) DB_REL=${DB_DIR#./} ;; esac   # relative: moves with this repository
 info "instance:   $CUR  (owner $(stat -c %U "$CUR"))"
 info "Koken:      $CUR/$HTDOCS  (owner $(stat -c %U "$CUR/$HTDOCS"), storage: $(du -sh "$STORAGE" | cut -f1))"
 info "containers: $APP_NAME-apache / $APP_NAME-mariadb, port $PORT"
@@ -213,7 +216,7 @@ if $APPLY; then
     [ "$(gzip -dc "$BACKUP/database.sql.gz" | grep -c 'CREATE TABLE')" -gt 0 ] || fail "Database dump is empty – stopping, nothing was changed."
     info "database dump: $(du -h "$BACKUP/database.sql.gz" | cut -f1)"
     # owners of all files (except the database), restored by rollback.sh
-    find "$CUR" \( -path "$CUR/mariadb" -o -path "$CUR/$DB_REL" \) -prune -o -printf '%U:%G\0%p\0' > "$BACKUP/owners"
+    find "$CUR" -path "$CUR/$DB_REL" -prune -o -printf '%U:%G\0%p\0' > "$BACKUP/owners"
 else
     info "[dry run] mariadb-dump $DB_NAME > $BACKUP/database.sql.gz, owners of all files > $BACKUP/owners"
 fi
@@ -297,7 +300,7 @@ say "5. Owners and settings"
 run set_env APACHE_HTDOCS "$WEB"
 run set_env KOKEN_REPO "$KOKEN_URL"
 run chmod 600 .env
-run find "$OPT" \( -path "$OPT/mariadb" -o -path "$OPT/$DB_REL" \) -prune -o \( ! -user root -o ! -group root \) -exec chown -h root:root {} +
+run find "$OPT" -path "$OPT/$DB_REL" -prune -o \( ! -user root -o ! -group root \) -exec chown -h root:root {} +
 run chmod 755 "$OPT"
 run chown -R www-data:www-data "$WEB"
 run web git -C "$WEB" remote set-url origin "$KOKEN_URL"
