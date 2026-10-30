@@ -219,11 +219,13 @@ und Datenbank hat die Migration nicht verändert. Für den Notfall liegen sie tr
 **Updates** (Koken-Code oder Docker-Setup):
 
 ```bash
-./update.sh
+./update.sh         # Docker-Setup: holt dieses Repo, baut die Container nur neu, wenn nötig
+./update-app.sh     # Koken und Theme-Checkouts: git pull, leert Kokens Cache
 ```
 
-Das Skript holt beide Repos, baut die Container nur neu, wenn sich am Docker-Setup etwas
-geändert hat, und leert Kokens Cache.
+Die Trennung root / `www-data` (Docker-Setup unter `/opt/koken/<domain>`, Web-Root unter
+`/var/www/htdocs/<domain>`) beschreibt [INSTALL.md](INSTALL.md#0-voraussetzungen). Die Umstellung
+bestehender Instanzen darauf folgt.
 
 **Aufräumen**, wenn alles ein paar Tage gut läuft:
 

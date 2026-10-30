@@ -8,7 +8,7 @@ services:
     restart: always
     container_name: ${APP_NAME:-koken}-apache
     volumes:
-      - ./${APACHE_HTDOCS:-src/htdocs}:/var/www/html
+      - ${APACHE_HTDOCS:-./src/htdocs}:/var/www/html
       - ./config/php.ini:/usr/local/etc/php/conf.d/zz-koken.ini:ro
     ports:
       - "${APACHE_BIND:-127.0.0.1}:${APACHE_PORT:-8080}:80"

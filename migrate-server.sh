@@ -241,6 +241,9 @@ else
     info "[dry run] git merge $NEW_A"
 fi
 
+# docker-compose.yml now mounts APACHE_HTDOCS as it is: a relative path needs a leading ./
+case "$(get_env APACHE_HTDOCS)" in /*|./*|../*) ;; *) run set_env APACHE_HTDOCS "./$HTDOCS"; info "  .env: APACHE_HTDOCS=./$HTDOCS" ;; esac
+
 # New settings in .env (existing values are kept)
 for kv in "KOKEN_REPO=$KOKEN_REPO" "KOKEN_BRANCH=$KOKEN_BRANCH" "APACHE_BIND=127.0.0.1"; do
     k=${kv%%=*}

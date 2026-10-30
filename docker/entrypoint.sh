@@ -9,10 +9,14 @@ ROOT=/var/www/html
 
 mkdir -p "$ROOT/storage"
 
-# Only walk the (possibly large) storage tree when something is not owned by www-data
-if [ -n "$(find "$ROOT/storage" ! -user www-data -print -quit 2>/dev/null)" ]; then
+# Only walk the (possibly large) storage tree when something is not owned by www-data.
+# On a server the web root belongs to www-data anyway (same UID 33 as on Debian/Ubuntu
+# hosts), so this does nothing there. git checkouts of themes/plugins (.git) are skipped:
+# Apache never needs them, and Docker Desktop refuses to chown their read-only objects.
+if [ -n "$(find "$ROOT/storage" -name .git -prune -o ! -user www-data -print -quit 2>/dev/null)" ]; then
     echo "koken: fixing ownership of storage/ (first start or files added from the host)"
-    chown -R www-data:www-data "$ROOT/storage"
+    find "$ROOT/storage" -name .git -prune -o ! -user www-data -exec chown www-data:www-data {} + \
+        || echo "koken: warning: could not change the owner of some files in storage/"
 fi
 
 [ -f "$ROOT/.htaccess" ] && chown www-data:www-data "$ROOT/.htaccess"

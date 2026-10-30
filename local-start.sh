@@ -51,8 +51,12 @@ set_env() {
 }
 random() { LC_ALL=C tr -dc 'A-Za-z0-9' < /dev/urandom | head -c "${1:-24}"; }
 
+# docker-compose.yml mounts APACHE_HTDOCS as it is: a relative path needs a leading ./
+# (older .env files: src/htdocs or ${APACHE_SRC}/htdocs)
 HTDOCS=$(get_env APACHE_HTDOCS); HTDOCS=${HTDOCS//\$\{APACHE_SRC\}/$(get_env APACHE_SRC)}
-case "$HTDOCS" in ""|*'$'*) HTDOCS=src/htdocs ;; esac
+case "$HTDOCS" in ""|*'$'*) HTDOCS=./src/htdocs ;; esac
+case "$HTDOCS" in /*|./*|../*) ;; *) HTDOCS="./$HTDOCS" ;; esac
+[ "$(get_env APACHE_HTDOCS)" = "$HTDOCS" ] || set_env APACHE_HTDOCS "$HTDOCS"
 APP_NAME=$(get_env APP_NAME); APP_NAME=${APP_NAME:-koken}
 PORT=$(get_env APACHE_PORT); PORT=${PORT:-8080}
 DB_DIR="$(get_env MARIADB_LOCAL_DIR)$(get_env MARIADB_DATA_DIR)"; DB_DIR=${DB_DIR:-./mariadb/data/lib}
@@ -82,7 +86,7 @@ if [ ! -d "$DB_DIR" ]; then
         # the credentials Koken expects (read with the PHP of the web image).
         say "First start: taking the database credentials from $DB_CONFIG …"
         docker compose build -q web
-        creds=$(docker compose run --rm --no-deps -T --entrypoint php -v "$PWD/$DB_CONFIG:/tmp/db.php:ro" web -r '
+        creds=$(docker compose run --rm --no-deps -T --entrypoint php -v "$(cd "$(dirname "$DB_CONFIG")" && pwd)/database.php:/tmp/db.php:ro" web -r '
             $r = include "/tmp/db.php"; $c = isset($KOKEN_DATABASE) ? $KOKEN_DATABASE : $r;
             foreach (array("database", "username", "password", "prefix") as $k) echo base64_encode((string) $c[$k]), "\n";')
         { read -r db; read -r user; read -r pass; read -r prefix; } <<< "$creds"

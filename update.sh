@@ -1,13 +1,13 @@
 #!/usr/bin/env bash
 #
-# Updates a running installation:
-#   1. this repository (Docker setup)       git pull
-#   2. Koken itself (src/htdocs)            git pull
-#   3. containers                           rebuilt/restarted only if the Docker setup changed
-#   4. Koken's API/site cache               cleared, so code changes show up immediately
+# Updates the Docker setup of a running installation (on a server: as root):
+#   1. this repository                 git pull (public repository, no key needed)
+#   2. containers                      rebuilt/restarted only if the Docker setup changed
 #
-# Photos, themes, plugins and configuration (src/htdocs/storage) and the database are
-# never touched. Usage: ./update.sh
+# Koken itself (the web root) and themes/plugins checked out with git are updated by
+# the owner of the web root, without Docker: ./update-app.sh
+# Photos, themes, plugins and configuration (storage/) and the database are never touched.
+# Usage: ./update.sh
 #
 set -euo pipefail
 cd "$(dirname "$0")"
@@ -19,10 +19,26 @@ if docker compose version >/dev/null 2>&1; then COMPOSE=(docker compose)
 elif command -v docker-compose >/dev/null 2>&1; then COMPOSE=(docker-compose)
 else fail "Docker Compose is not installed."; fi
 
+[ -w .git ] || fail "No write access to this repository – on a server run as root: sudo ./update.sh"
+
 get_env() { grep -E "^$1=" .env | tail -n 1 | cut -d= -f2- || true; }
-HTDOCS=$(get_env APACHE_HTDOCS); case "$HTDOCS" in ""|*'$'*) HTDOCS=src/htdocs ;; esac
-APP_NAME=$(get_env APP_NAME); APP_NAME=${APP_NAME:-koken}
-[ -d "$HTDOCS/.git" ] || fail "$HTDOCS is not a git checkout (old setup?) – see migrate-server.sh."
+set_env() {
+    local tmp; tmp=$(mktemp)
+    if grep -q "^$1=" .env; then
+        awk -v k="$1" -v v="$2" 'BEGIN { FS = OFS = "=" } $1 == k { print k "=" v; next } { print }' .env > "$tmp"
+    else
+        cat .env > "$tmp"; [ -n "$(tail -c 1 .env)" ] && echo >> "$tmp"; printf '%s=%s\n' "$1" "$2" >> "$tmp"
+    fi
+    cat "$tmp" > .env; rm -f "$tmp"
+}
+
+# docker-compose.yml mounts APACHE_HTDOCS as it is: a relative path needs a leading ./
+# (older .env files: src/htdocs or ${APACHE_SRC}/htdocs)
+HTDOCS=$(get_env APACHE_HTDOCS); HTDOCS=${HTDOCS//\$\{APACHE_SRC\}/$(get_env APACHE_SRC)}
+case "$HTDOCS" in ""|*'$'*) HTDOCS=./src/htdocs ;; esac
+case "$HTDOCS" in /*|./*|../*) ;; *) HTDOCS="./$HTDOCS" ;; esac
+[ "$(get_env APACHE_HTDOCS)" = "$HTDOCS" ] || set_env APACHE_HTDOCS "$HTDOCS"
+[ -f "$HTDOCS/index.php" ] || fail "No Koken in $HTDOCS (APACHE_HTDOCS in .env) – run ./setup.sh first."
 
 say "Docker setup:"
 before=$(git rev-parse HEAD)
@@ -37,9 +53,6 @@ fi
 git merge --ff-only '@{u}'
 docker_changed=$(git diff --name-only "$before" HEAD -- Dockerfile docker-compose.yml config docker | head -n 1)
 
-say "Koken ($HTDOCS):"
-git -C "$HTDOCS" pull --ff-only
-
 if [ -n "$docker_changed" ]; then
     say "Docker setup changed – rebuilding the containers …"
     "${COMPOSE[@]}" up -d --build
@@ -47,7 +60,9 @@ else
     "${COMPOSE[@]}" up -d
 fi
 
-say "Clearing Koken's API and page cache …"
-docker exec "$APP_NAME-apache" sh -c 'rm -rf /var/www/html/storage/cache/api/* /var/www/html/storage/cache/site/* /var/www/html/storage/cache/plugins/*' || true
-
-say "Done: Docker setup $(git rev-parse --short HEAD), Koken $(git -C "$HTDOCS" rev-parse --short HEAD)"
+say "Done: Docker setup $(git rev-parse --short HEAD)"
+if [ "$(id -u)" = 0 ]; then
+    echo "Koken itself:  sudo -u www-data -H $PWD/update-app.sh $HTDOCS"
+else
+    echo "Koken itself:  ./update-app.sh"
+fi

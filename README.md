@@ -17,7 +17,7 @@ cd koken
 
 1. creates `.env` from `.env.dist` with random database passwords and an installer token,
 2. clones Koken ([koken2026-installer](https://github.com/juergenarne/koken2026-installer),
-   `KOKEN_REPO` in `.env`) into `src/htdocs`,
+   `KOKEN_REPO` in `.env`) into the web root (`APACHE_HTDOCS`, locally `./src/htdocs`),
 3. builds the PHP 8.5 image and starts the containers,
 4. prints the link to the web installer, e.g. `http://localhost:8080/install/?token=…`.
 
@@ -26,73 +26,66 @@ e-mail, password, time zone) and Koken is ready. Sign in at `/admin/`.
 
 Options: `./setup.sh -p 8085` (other port), `./setup.sh -y` (no questions).
 
-## Two repositories
+## Three repositories
 
-| Repository | Content | On the server |
-|---|---|---|
-| **koken-docker-blueprint** (this one) | Docker setup: `Dockerfile`, `docker-compose.yml`, `.env.dist`, `config/`, scripts | `git pull` |
-| **koken2026-installer** | Koken for PHP 8.5 + web installer (the web root) | cloned into `src/htdocs`, `git pull` |
+| Repository | Content | On the server | Key |
+|---|---|---|---|
+| **koken-docker-blueprint** (this one, public) | Docker setup: `Dockerfile`, `docker-compose.yml`, `.env.dist`, `config/`, scripts | `/opt/koken/<domain>`, root | none (https) |
+| **koken2026-installer** (private) | Koken for PHP 8.5 + web installer (the web root) | `/var/www/htdocs/<domain>`, www-data | deploy key of www-data |
+| **koken-theme-axis** (private) | the theme *Axis* | `storage/themes/axis-86d2f683-…/` in the web root, www-data | deploy key of www-data |
 
-Your photos, themes, plugins and configuration live in `src/htdocs/storage/`, the
+Your photos, themes, plugins and configuration live in the web root's `storage/`, the
 database in `mariadb/`. Neither is part of a repository, so pulling never touches them.
+
+## Server layout: root and www-data
+
+Infrastructure and application are separated on a server:
+
+- **root** owns `/opt/koken/<domain>` (this repository, `.env` with mode `600`, `mariadb/`) and
+  Docker. It runs `setup.sh` and `update.sh` and needs no SSH key – this repository is public.
+- **www-data** owns the web root `/var/www/htdocs/<domain>` and the deploy keys for the private
+  repositories (`/var/www/.ssh`). It has **no** Docker rights and updates Koken and the theme with
+  `update-app.sh`, which needs neither Docker nor root.
+
+Only the web root is mounted into the container. An attacker who takes over Koken ends up
+there as www-data and reaches neither `.env`, Docker nor the database files. `.git` folders are
+never served (`config/apache-koken.conf`). Step by step (German): [INSTALL.md](INSTALL.md).
+
+Locally everything stays in one folder (`src/htdocs`) and belongs to you.
 
 ## Updates
 
-Change Koken in `src/htdocs` (it is a checkout of koken2026-installer), commit and push.
-Then, on every installation:
-
 ```bash
-./update.sh
+sudo /opt/koken/<domain>/update.sh                     # Docker setup (root)
+sudo -u www-data -H /opt/koken/<domain>/update-app.sh /var/www/htdocs/<domain>   # Koken + themes (www-data)
 ```
 
-It pulls both repositories, rebuilds the containers only when the Docker setup changed,
-and clears Koken's caches. PHP picks up code changes immediately (no restart needed).
+Locally: `./update.sh` and `./update-app.sh`.
+
+`update.sh` pulls this repository and rebuilds the containers only when the Docker setup changed.
+`update-app.sh` pulls Koken and every theme or plugin folder in `storage/` that is a git checkout,
+then clears Koken's caches. PHP picks up code changes immediately (no restart needed).
+
+To change Koken, edit `src/htdocs` locally (a checkout of koken2026-installer), commit and push,
+then run `update-app.sh` on every installation.
 
 ## Theme Axis (own repository)
 
 The theme in use, *Axis*, is kept in the private repository
 [koken-theme-axis](https://github.com/juergenarne/koken-theme-axis) (the Axis license does
 not allow redistribution – keep it private). Its folder name must stay as it is: Koken stores
-it in the database.
-
-| | Theme repository |
-|---|---|
-| Local | `src/htdocs/storage/themes/axis-86d2f683-9f90-ca3f-d93f-a2e0a9d0a089/` is the checkout itself: edit, commit, push there |
-| Server | a clone next to the instance (`~/koken-theme-axis`), copied into `storage/themes/` |
-
-On the server the theme folder is not a checkout, because `storage/` belongs to `www-data`
-(`docker/entrypoint.sh` resets the owner on every container start).
-
-**Once per server** – a second read-only deploy key (GitHub allows a key for one repository only):
+it in the database. Locally and on the server the folder is a checkout of that repository:
 
 ```bash
-ssh-keygen -t ed25519 -f ~/.ssh/koken_theme_axis_deploy -N "" -C "koken-theme-axis $(hostname)"
-cat ~/.ssh/koken_theme_axis_deploy.pub   # GitHub: koken-theme-axis → Settings → Deploy keys → Add (read only)
-cat >> ~/.ssh/config <<'EOF'
-Host github-koken-theme-axis
-    HostName github.com
-    User git
-    IdentityFile ~/.ssh/koken_theme_axis_deploy
-    IdentitiesOnly yes
-EOF
-git clone git@github-koken-theme-axis:juergenarne/koken-theme-axis.git ~/koken-theme-axis
+# server (deploy key of www-data, see INSTALL.md step 1)
+sudo -u www-data -H git clone git@github-koken-theme-axis:juergenarne/koken-theme-axis.git \
+    /var/www/htdocs/<domain>/storage/themes/axis-86d2f683-9f90-ca3f-d93f-a2e0a9d0a089
 ```
 
-**Every theme update** – in the directory of the instance:
-
-```bash
-T=src/htdocs/storage/themes/axis-86d2f683-9f90-ca3f-d93f-a2e0a9d0a089
-git -C ~/koken-theme-axis pull
-sudo tar czf ~/axis-backup-$(date +%F).tgz -C "$(dirname "$T")" "$(basename "$T")"   # backup
-sudo rsync -rlcni --delete --exclude .git ~/koken-theme-axis/ "$T/"   # dry run: lists the changes
-sudo rsync -rlc   --delete --exclude .git ~/koken-theme-axis/ "$T/"
-sudo chown -R www-data:www-data "$T"
-docker exec koken-apache sh -c 'rm -rf /var/www/html/storage/cache/site/*'   # <APP_NAME>-apache
-```
-
-Check the dry run the first time: `--delete` removes files that exist only on the server.
-New theme options (e.g. *Frontend → Change style in frontend*) have to be switched on and
-published in the admin of each instance – settings live in the database, not in the theme.
+Edit it locally in `src/htdocs/storage/themes/axis-86d2f683-9f90-ca3f-d93f-a2e0a9d0a089/`, commit
+and push there; `update-app.sh` pulls it on the server. New theme options (e.g. *Frontend → Change
+style in frontend*) have to be switched on and published in the admin of each instance – settings
+live in the database, not in the theme.
 
 ## Local development
 
@@ -153,12 +146,14 @@ is tagged `koken-rollback:<date>`.
 | `docker-compose.yml` | `web` (Apache/PHP) and `db` (MariaDB) |
 | `.env.dist` | All settings; copied to `.env` by `setup.sh` (`.env` is not committed) |
 | `config/php.ini` | PHP settings (memory, upload size, no error display) |
-| `config/apache-koken.conf` | Apache settings Koken needs behind a port mapping (see below) |
+| `config/apache-koken.conf` | Apache settings Koken needs behind a port mapping (see below); blocks `.git` |
 | `docker/entrypoint.sh` | Fixes file permissions of `storage/` on container start |
-| `setup.sh` / `update.sh` | first installation / updates |
+| `setup.sh` | first installation (on a server as root; clones Koken as www-data) |
+| `update.sh` | updates the Docker setup (root) |
+| `update-app.sh` | updates Koken and git-checked-out themes/plugins, clears the cache (www-data, no Docker) |
 | `local-start.sh` | local development copy: start, load dump, open browser |
 | `migrate-server.sh` | one-time migration of servers with the old layout |
-| `src/htdocs/` | Koken itself – checkout of koken2026-installer, **not in this repository** |
+| `src/htdocs/` | Koken itself (locally; on a server `/var/www/htdocs/<domain>`) – checkout of koken2026-installer, **not in this repository** |
 | `src/htdocs/install/` | Web installer, incl. the default theme *Elementary* |
 | `src/htdocs/storage/` | Created by the installer: photos, cache, themes, plugins, configuration – **not in git** |
 | `mariadb/` | Database files – **not in git** |
@@ -205,7 +200,7 @@ services:
 
 or use `docker compose exec db mariadb-dump -u root -p koken > backup.sql`.
 
-**Backups** = `src/htdocs/storage/` + a database dump.
+**Backups** = the web root's `storage/` + a database dump (commands: [INSTALL.md](INSTALL.md), step 7).
 
 **Koken store.** store.koken.me no longer exists. Themes and plugins can still be
 installed by copying them to `storage/themes/` and `storage/plugins/`. Calls to the store
