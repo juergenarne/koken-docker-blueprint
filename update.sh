@@ -38,6 +38,13 @@ HTDOCS=$(get_env APACHE_HTDOCS); HTDOCS=${HTDOCS//\$\{APACHE_SRC\}/$(get_env APA
 case "$HTDOCS" in ""|*'$'*) HTDOCS=./src/htdocs ;; esac
 case "$HTDOCS" in /*|./*|../*) ;; *) HTDOCS="./$HTDOCS" ;; esac
 [ "$(get_env APACHE_HTDOCS)" = "$HTDOCS" ] || set_env APACHE_HTDOCS "$HTDOCS"
+# DB_PORT (database on 127.0.0.1 of the host): older .env files have none – pick a free one
+if [ -z "$(get_env DB_PORT)" ]; then
+    p=3307
+    while (exec 3<>"/dev/tcp/127.0.0.1/$p") 2>/dev/null; do p=$((p + 1)); done
+    set_env DB_PORT "$p"
+    say "Database port: 127.0.0.1:$p (DB_PORT in .env)"
+fi
 [ -f "$HTDOCS/index.php" ] || fail "No Koken in $HTDOCS (APACHE_HTDOCS in .env) – run ./setup.sh first."
 
 say "Docker setup:"

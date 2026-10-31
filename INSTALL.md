@@ -110,6 +110,7 @@ In der `.env` anpassen. Passwörter und Installer-Token **leer lassen**, die erz
 | `APACHE_PORT` | Port auf dem Host. **Pro Instanz eindeutig.** | `8085` |
 | `APACHE_BIND` | `127.0.0.1` hinter nginx oder lokal; `0.0.0.0` nur, wenn der Container direkt von außen erreichbar sein soll | `127.0.0.1` |
 | `APACHE_HTDOCS` | Web-Root (Koken). Server: **absoluter Pfad** unter `/var/www/htdocs`; lokal `./src/htdocs` | `/var/www/htdocs/urbanphotography.berlin` |
+| `DB_PORT` | Port der Datenbank, nur auf `127.0.0.1` des Hosts (Zugriff per SSH-Tunnel). **Pro Instanz eindeutig.** Leer lassen: `setup.sh` wählt einen freien ab 3307 | `3307` |
 | `TZ` | Zeitzone | `Europe/Berlin` |
 | `KOKEN_REPO` | Server: die Adresse mit dem Deploy-Key-Alias aus Schritt 1 | `git@github-koken2026:juergenarne/koken2026-installer.git` |
 | `MYSQL_DATABASE`, `MYSQL_USER` | Name der Datenbank und des DB-Benutzers | `koken` |
@@ -256,6 +257,18 @@ cd /opt/koken/<domain>
 sudo docker exec <APP_NAME>-mariadb sh -c 'mariadb-dump -uroot -p"$MARIADB_ROOT_PASSWORD" --single-transaction "$MARIADB_DATABASE"' | gzip > koken-db-$(date +%F).sql.gz
 sudo tar -czf koken-storage-$(date +%F).tar.gz --exclude=./storage/cache -C /var/www/htdocs/<domain> ./storage
 ```
+
+**Datenbank mit eigenem Client** (Sequel Ace, TablePlus, DBeaver …): MariaDB lauscht nur auf
+`127.0.0.1:<DB_PORT>` des Servers, also im Client „Connect over SSH“ wählen:
+
+| | |
+|---|---|
+| SSH | Server, Benutzer und Key wie beim normalen SSH-Login |
+| MySQL-Host / Port | `127.0.0.1` / `DB_PORT` aus der `.env` |
+| Benutzer / Passwort | `MYSQL_USER` / `MYSQL_PASSWORD` (oder `root` / `MYSQL_ROOT_PASSWORD`) |
+
+Ohne SSH-Funktion im Client: `ssh -N -L <DB_PORT>:127.0.0.1:<DB_PORT> user@server`, dann lokal auf
+`127.0.0.1:<DB_PORT>` verbinden. Lokal (ohne Server) direkt `127.0.0.1:<DB_PORT>`.
 
 | Was | Server | lokal | Im Git? |
 |---|---|---|---|

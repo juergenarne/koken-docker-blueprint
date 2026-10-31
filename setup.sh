@@ -60,6 +60,13 @@ set_env() {
 
 get_env() { grep -E "^$1=" .env | tail -n 1 | cut -d= -f2- || true; }
 
+# free_port START – first port from START on that nothing on this host listens to
+free_port() {
+    local p=$1
+    while (exec 3<>"/dev/tcp/127.0.0.1/$p") 2>/dev/null; do p=$((p + 1)); done
+    echo "$p"
+}
+
 # --- .env ------------------------------------------------------------------------
 if [ ! -f .env ]; then
     say "Creating .env"
@@ -73,6 +80,15 @@ elif ! $ASSUME_YES && [ -t 0 ]; then
     current=$(get_env APACHE_PORT)
     read -r -p "Port for the website [${current:-8080}]: " answer
     [ -n "$answer" ] && set_env APACHE_PORT "$answer"
+fi
+
+if [ -z "$(get_env DB_PORT)" ]; then
+    DB_PORT=$(free_port 3307)
+    if ! $ASSUME_YES && [ -t 0 ]; then
+        read -r -p "Port for the database (127.0.0.1 only, SSH tunnel) [$DB_PORT]: " answer
+        [ -n "$answer" ] && DB_PORT=$answer
+    fi
+    set_env DB_PORT "$DB_PORT"
 fi
 
 [ -n "$(get_env MYSQL_PASSWORD)" ]      || set_env MYSQL_PASSWORD "$(random 24)"
