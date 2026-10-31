@@ -51,7 +51,7 @@ services:
     # Only on 127.0.0.1 of the host: reachable through an SSH tunnel, never from the
     # internet. DB_PORT empty = a random free port (see "Database access" in README.md)
     ports:
-      - "127.0.0.1:${DB_PORT:-}:3306"
+      - "127.0.0.1:${MYSQL_PORT:-}:3306"
     networks:
       - koken-network
 
