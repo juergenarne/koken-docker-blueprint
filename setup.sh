@@ -82,13 +82,13 @@ elif ! $ASSUME_YES && [ -t 0 ]; then
     [ -n "$answer" ] && set_env APACHE_PORT "$answer"
 fi
 
-if [ -z "$(get_env DB_PORT)" ]; then
-    DB_PORT=$(free_port 3307)
+if [ -z "$(get_env MYSQL_PORT)" ]; then
+    MYSQL_PORT=$(free_port 3307)
     if ! $ASSUME_YES && [ -t 0 ]; then
-        read -r -p "Port for the database (127.0.0.1 only, SSH tunnel) [$DB_PORT]: " answer
-        [ -n "$answer" ] && DB_PORT=$answer
+        read -r -p "Port for the database (127.0.0.1 only, SSH tunnel) [$MYSQL_PORT]: " answer
+        [ -n "$answer" ] && MYSQL_PORT=$answer
     fi
-    set_env DB_PORT "$DB_PORT"
+    set_env MYSQL_PORT "$MYSQL_PORT"
 fi
 
 [ -n "$(get_env MYSQL_PASSWORD)" ]      || set_env MYSQL_PASSWORD "$(random 24)"

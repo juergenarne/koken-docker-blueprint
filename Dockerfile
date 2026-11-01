@@ -16,6 +16,7 @@ RUN apt-get update && apt-get install -y \
     imagemagick \
     unzip \
     mariadb-client \
+    msmtp \
     --no-install-recommends \
     && if [ "$INSTALL_FFMPEG" = "true" ]; then apt-get install -y --no-install-recommends ffmpeg; fi \
     && docker-php-ext-configure gd --with-freetype --with-jpeg \

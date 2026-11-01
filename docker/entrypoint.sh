@@ -28,4 +28,39 @@ if [ -n "${KOKEN_PUBLIC_PORT:-}" ] && [ "$KOKEN_PUBLIC_PORT" != 80 ] && ! grep -
     echo "Listen $KOKEN_PUBLIC_PORT" >> /etc/apache2/ports.conf
 fi
 
+# Outgoing mail (password reset): PHP's mail() calls /usr/sbin/sendmail, which is msmtp
+# when SMTP_HOST is set. Without it there is no sendmail, so Koken reports that email
+# delivery is not configured instead of failing silently.
+if [ -n "${SMTP_HOST:-}" ]; then
+    port=${SMTP_PORT:-587}
+    {
+        echo "defaults"
+        # 465 = TLS from the start, otherwise (587, 25) STARTTLS; SMTP_TLS=off for local test servers
+        if [ "${SMTP_TLS:-}" = off ]; then
+            echo "tls off"
+        else
+            echo "tls on"
+            [ "$port" = 465 ] && echo "tls_starttls off" || echo "tls_starttls on"
+        fi
+        echo "tls_trust_file /etc/ssl/certs/ca-certificates.crt"
+        echo "account default"
+        echo "host $SMTP_HOST"
+        echo "port $port"
+        # Koken sends from the user's own address; the server only accepts its own
+        echo "from ${SMTP_FROM:-${SMTP_USER:-}}"
+        echo "set_from_header on"
+        echo "allow_from_override off"
+        if [ -n "${SMTP_USER:-}" ]; then
+            echo "auth on"
+            echo "user $SMTP_USER"
+            echo "password $SMTP_PASSWORD"
+        fi
+    } > /etc/msmtprc
+    chown root:www-data /etc/msmtprc
+    chmod 640 /etc/msmtprc
+    ln -sf /usr/bin/msmtp /usr/sbin/sendmail
+else
+    rm -f /usr/sbin/sendmail /etc/msmtprc
+fi
+
 exec docker-php-entrypoint "$@"

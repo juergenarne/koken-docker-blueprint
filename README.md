@@ -189,11 +189,11 @@ reach it from other machines.
 **Upgrading an existing Koken installation** (e.g. from PHP 7.4): no database migration
 is needed – see *Migrating a server with the old layout*.
 
-**Database access from the host.** MariaDB is published on `127.0.0.1:${DB_PORT}` of the
+**Database access from the host.** MariaDB is published on `127.0.0.1:${MYSQL_PORT}` of the
 host only (`setup.sh` picks a free port from 3307 on, unique per instance). Locally, connect
-your GUI tool or `mysqldump` to `127.0.0.1:<DB_PORT>`; on a server, use the tool's
-"connect over SSH" option (or `ssh -N -L <DB_PORT>:127.0.0.1:<DB_PORT> user@server`) with
-DB host `127.0.0.1` and port `DB_PORT`. Credentials: `MYSQL_USER`/`MYSQL_PASSWORD` (or
+your GUI tool or `mysqldump` to `127.0.0.1:<MYSQL_PORT>`; on a server, use the tool's
+"connect over SSH" option (or `ssh -N -L <MYSQL_PORT>:127.0.0.1:<MYSQL_PORT> user@server`) with
+DB host `127.0.0.1` and port `MYSQL_PORT`. Credentials: `MYSQL_USER`/`MYSQL_PASSWORD` (or
 `root`/`MYSQL_ROOT_PASSWORD`) from `.env`.
 
 **Backups** = the web root's `storage/` + a database dump (commands: [INSTALL.md](INSTALL.md), step 7).
